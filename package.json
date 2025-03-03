@@ -6,9 +6,7 @@
   "scripts": {
     "serve": "vite",
     "build": "vite build",
-    "lint": "vue-cli-service lint",
-    "start": "vite",
-    "dev": "vite"
+    "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "three": "^0.146.0"
