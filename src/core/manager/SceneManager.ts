@@ -7,6 +7,13 @@ export class SceneManager {
     }
 
     /**
+     * 创建一个新的场景文件
+     */
+    public newFile(): void {
+        this.scene = new XthScene();
+    }
+
+    /**
      * 设置当前场景
      * @param scene 要设置的场景
      */

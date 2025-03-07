@@ -6,7 +6,7 @@
  */
 import * as THREE from 'three';
 import { XthObject } from './XthObject';
-import { JsonProperty } from '../Decorator';
+import { JsonProperty } from '../bottomClass/Decorator';
 
 export enum OpeningType {
     SingleDoor = 0,

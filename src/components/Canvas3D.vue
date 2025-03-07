@@ -5,14 +5,14 @@
  * @Version: 1.0
 -->
 <template>
-  <canvas ref="canvasRef"></canvas>
+  <div ref="canvasRef" id="view3d"></div>
 </template>
 
 <script>
 import { defineComponent, onMounted, ref } from 'vue';
 import * as THREE from 'three';
-import { Cube } from '@/core/Cube';
-import { Renderer } from '@/core/Renderer';
+// import { Cube } from '@/core/Cube';
+import { Api } from '@/core/Api';
 
 export default defineComponent({
   name: 'Canvas3D',
@@ -23,31 +23,9 @@ export default defineComponent({
     onMounted(() => {
       if (!canvasRef.value) return;
 
-      // 创建场景
-      const scene = new THREE.Scene();
-
-      // 创建相机
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.z = 5;
-
-      // 创建渲染器
-      const renderer = new Renderer(scene, camera, canvasRef.value);
-
-      // 创建立方体
-      const cube = new Cube(scene);
-
-      // 动画循环
-      const animate = () => {
-        requestAnimationFrame(animate);
-
-        // 立方体旋转
-        cube.animate();
-
-        // 渲染场景
-        renderer.render();
-      };
-
-      animate();
+      Api.init({view3dId: canvasRef.value.id});
+      Api.executeCommand("newFile", {});
+      Api.executeCommand("createOneWall", {});
     });
 
     return {
