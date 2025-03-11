@@ -1,3 +1,9 @@
+/*
+ * @Author: LinYiHan
+ * @Date: 2025-03-06 15:39:17
+ * @Description: 
+ * @Version: 1.0
+ */
 import { BaseClass } from './BaseClass';
 
 export class Configure extends BaseClass {
@@ -5,6 +11,9 @@ export class Configure extends BaseClass {
 
     // 添加 view3dId 属性
     public view3dId?: string;
+
+    // 添加 view2dId 属性
+    public view2dId?: string;
 
     // 添加墙体颜色相关属性
     public wallMeshColor2: number = 0x00ff00; // 默认墙体二维mesh颜色
@@ -15,9 +24,6 @@ export class Configure extends BaseClass {
     // 私有构造函数，防止外部实例化
     private constructor(json?: any) {
         super(json);
-        if (json && json.view3dId) {
-            this.view3dId = json.view3dId;
-        }
     }
 
     // 获取单例实例

@@ -142,4 +142,127 @@ export class Geometry {
             point.y >= minY && point.y <= maxY
         );
     }
+
+    /**
+     * 对复合线段进行偏移，支持闭合和非闭合情况
+     * @param segments 复合线段，包含直线和圆弧
+     * @param offsets 每个线段或圆弧的偏移量
+     * @param isClosed 是否闭合
+     * @returns 偏移后的复合线段
+     */
+    public static offsetCompositeLine(
+        segments: Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }>,
+        offsets: number[],
+        isClosed: boolean = true
+    ): Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }> {
+        const offsetSegments: Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }> = [];
+
+        for (let i = 0; i < segments.length; i++) {
+            const segment = segments[i];
+            const offset = offsets[i];
+
+            if (segment.type === 'line') {
+                // 处理直线偏移
+                const linePoints = segment.points;
+                const offsetLinePoints = this.offsetLine(linePoints, offset);
+                offsetSegments.push({ type: 'line', points: offsetLinePoints });
+            } else if (segment.type === 'arc') {
+                // 处理圆弧偏移
+                const arcPoints = segment.points;
+                const radius = segment.radius || 0;
+                const center = segment.center || new THREE.Vector2();
+                const offsetArcPoints = this.offsetArc(arcPoints, radius, center, offset);
+                offsetSegments.push({ type: 'arc', points: offsetArcPoints, radius: radius + offset, center });
+            }
+
+            // 调试信息：检查连续性
+            if (i > 0) {
+                const prevSegment = offsetSegments[i - 1];
+                const currSegment = offsetSegments[i];
+                const prevEndPoint = prevSegment.points[prevSegment.points.length - 1];
+                const currStartPoint = currSegment.points[0];
+
+                if (!prevEndPoint.equals(currStartPoint)) {
+                    console.warn(`Discontinuity detected between segment ${i - 1} and segment ${i}`);
+                    // 调整当前线段的起点以与前一个线段的终点匹配
+                    currSegment.points[0] = prevEndPoint.clone();
+                }
+            }
+        }
+
+        // 处理非闭合情况
+        if (!isClosed) {
+            offsetSegments[0].points[0] = segments[0].points[0].clone();
+            offsetSegments[offsetSegments.length - 1].points[offsetSegments[offsetSegments.length - 1].points.length - 1] = segments[segments.length - 1].points[segments[segments.length - 1].points.length - 1].clone();
+        }
+
+        // 合并相邻的线段以减少线段数目
+        const mergedSegments: Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }> = [];
+        let currentSegment = offsetSegments[0];
+
+        for (let i = 1; i < offsetSegments.length; i++) {
+            const nextSegment = offsetSegments[i];
+
+            if (currentSegment.type === 'line' && nextSegment.type === 'line') {
+                // 合并相邻的直线段
+                currentSegment.points = currentSegment.points.concat(nextSegment.points.slice(1));
+            } else {
+                mergedSegments.push(currentSegment);
+                currentSegment = nextSegment;
+            }
+        }
+
+        mergedSegments.push(currentSegment);
+
+        return mergedSegments;
+    }
+
+    /**
+     * 对直线进行偏移
+     * @param points 直线的点集
+     * @param offset 偏移量
+     * @returns 偏移后的点集
+     */
+    private static offsetLine(points: THREE.Vector2[], offset: number): THREE.Vector2[] {
+        const offsetPoints: THREE.Vector2[] = [];
+        const length = points.length;
+
+        for (let i = 0; i < length; i++) {
+            const prev = points[(i - 1 + length) % length];
+            const curr = points[i];
+            const next = points[(i + 1) % length];
+
+            const vPrev = curr.clone().sub(prev).normalize();
+            const vNext = next.clone().sub(curr).normalize();
+
+            const angle = Math.atan2(vNext.y - vPrev.y, vNext.x - vPrev.x);
+            const offsetX = offset * Math.cos(angle);
+            const offsetY = offset * Math.sin(angle);
+
+            offsetPoints.push(new THREE.Vector2(curr.x + offsetX, curr.y + offsetY));
+        }
+
+        return offsetPoints;
+    }
+
+    /**
+     * 对圆弧进行偏移
+     * @param points 圆弧的点集
+     * @param radius 圆弧的半径
+     * @param center 圆弧的中心点
+     * @param offset 偏移量
+     * @returns 偏移后的点集
+     */
+    private static offsetArc(points: THREE.Vector2[], radius: number, center: THREE.Vector2, offset: number): THREE.Vector2[] {
+        const offsetPoints: THREE.Vector2[] = [];
+        const newRadius = radius + offset;
+
+        for (const point of points) {
+            const direction = point.clone().sub(center).normalize();
+            const offsetPoint = center.clone().add(direction.multiplyScalar(newRadius));
+            offsetPoints.push(offsetPoint);
+        }
+
+        return offsetPoints;
+    }
 }

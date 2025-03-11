@@ -1,6 +1,14 @@
+/*
+ * @Author: LinYiHan
+ * @Date: 2025-03-06 15:39:17
+ * @Description: 
+ * @Version: 1.0
+ */
 export class BaseClass {
     // 类名属性
     public className: string;
+
+    [key: string]: any;
 
     /**
      * 构造函数
@@ -18,10 +26,15 @@ export class BaseClass {
      * @returns 返回对象的 JSON 表示
      */
     public toJSON(): any {
-        return {
-            className: this.className,
-            // 可以根据需要添加更多属性
-        };
+        const json: any = {};
+        const properties = Object.getOwnPropertyNames(this);
+        properties.forEach(property => {
+            // 排除方法
+            if (typeof this[property] !== 'function') {
+                json[property] = this[property];
+            }
+        });
+        return json;
     }
 
     /**
@@ -29,10 +42,12 @@ export class BaseClass {
      * @param json JSON 数据
      */
     public fromJSON(json: any): void {
-        if (json.className) {
-            this.className = json.className;
-        }
-        // 可以根据需要恢复更多属性
+        const properties = Object.getOwnPropertyNames(this);
+        properties.forEach(property => {
+            if (json[property] !== undefined) {
+                this[property] = json[property];
+            }
+        });
     }
 
     /**
@@ -50,7 +65,11 @@ export class BaseClass {
      * @param sourceClass 源对象
      */
     public copy(sourceClass: BaseClass): void {
-        this.className = sourceClass.className;
-        // 可以根据需要复制更多属性
+        const properties = Object.getOwnPropertyNames(sourceClass);
+        properties.forEach(property => {
+            if (typeof sourceClass[property] !== 'function') {
+                this[property] = sourceClass[property];
+            }
+        });
     }
 }

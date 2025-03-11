@@ -8,12 +8,15 @@ import { SceneManager } from "./manager/SceneManager";
 import { CommandManager } from "./command/CommandManager";
 import { Configure } from "./bottomClass/Configure";
 import { View3d } from './view/View3d';
+import { ReactorManager } from "./manager/ReactorManager";
+import { View2d } from "./view/View2d";
 
 export class Application {
     private _sceneManager?: SceneManager;
     private _commandManager?: CommandManager;
     private _animationFrameId: number | null = null;
     private _view3d?: View3d;
+    private _view2d?: View2d;
 
     // Getter and Setter for sceneManager
     public get sceneManager(): SceneManager {
@@ -37,6 +40,19 @@ export class Application {
         this._commandManager = value;
     }
 
+    private _reactorManager?: ReactorManager;
+
+    // Getter and Setter for reactorManager
+    public get reactorManager(): ReactorManager {
+        if (!this._reactorManager) {
+            this._reactorManager = new ReactorManager();
+        }
+        return this._reactorManager;
+    }
+    public set reactorManager(value: ReactorManager) {
+        this._reactorManager = value;
+    }
+
     // Getter and Setter for animationFrameId
     public get animationFrameId(): number | null {
         return this._animationFrameId;
@@ -49,15 +65,25 @@ export class Application {
     public get view3d(): View3d | undefined {
         return this._view3d;
     }
+
     public set view3d(value: View3d | undefined) {
         this._view3d = value;
+    }
+
+    // Getter and Setter for view2d
+    public get view2d(): View2d | undefined {
+        return this._view2d;
+    }
+
+    public set view2d(value: View2d | undefined) {
+        this._view2d = value;
     }
 
     /**
      * 构造函数
      * @param param 可选参数，用于初始化应用程序
      */
-    constructor(param?: { view3dId?: string }) {
+    constructor(param?: { view3dId?: string; view2dId?: string }) {
         // 将 param 传递给 Configure 进行反序列化
         if (param) {
             Configure.Instance.fromJSON(param);
@@ -67,17 +93,18 @@ export class Application {
         if (param && param.view3dId) {
             this.view3d = new View3d(param.view3dId);
         }
+
+        // 初始化 View2d，如果 param 中包含 view2dId
+        if (param && param.view2dId) {
+            this.view2d = new View2d(param.view2dId);
+        }
     }
 
     /**
      * 初始化应用程序
      */
     public initialize(): void {
-        // 初始化场景管理器
-        this.sceneManager = new SceneManager();
-
-        // 初始化命令管理器
-        this.commandManager = new CommandManager();
+        this.reactorManager.registryAll();
 
         // 注册文件模块命令
         this.commandManager.registerFileCommands();
