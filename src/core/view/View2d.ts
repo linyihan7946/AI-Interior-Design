@@ -35,7 +35,8 @@ export class View2d {
 
         // 初始化正交相机
         const aspect = container.clientWidth / container.clientHeight;
-        this.camera = new THREE.OrthographicCamera(-aspect * 2000, aspect * 2000, 1 * 2000, -1 * 2000, 0.0001, 1000000); // 将 near 和 far 分别修改为 0.0001 和 1000000
+        const scale = 2000; // 设置缩放比例为 2000
+        this.camera = new THREE.OrthographicCamera(-aspect * scale, aspect * scale, 1 * scale, -1 * scale, 0.0001, 1000000); // 将 near 和 far 分别修改为 0.0001 和 1000000
         this.camera.position.set(0, 0, 500); // 设置相机位置
         this.camera.lookAt(0, 0, 0); // 设置相机朝向
         this.camera.zoom = 1; // 设置相机 zoom 值为 1

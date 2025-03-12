@@ -60,16 +60,17 @@ export class XthWall extends XthObject {
         // 计算墙体的二维点集
         const halfThickness = this.thickness / 2;
         const points = [
-            new THREE.Vector2(-halfThickness, 0),
-            new THREE.Vector2(halfThickness, 0),
-            new THREE.Vector2(halfThickness, length),
-            new THREE.Vector2(-halfThickness, length)
+            new THREE.Vector2(0, -halfThickness),
+            new THREE.Vector2(0, halfThickness),
+            new THREE.Vector2(length, halfThickness),
+            new THREE.Vector2(length, -halfThickness),
+            new THREE.Vector2(0, -halfThickness),
         ];
 
         // 调用 ModelingTool 中的接口来创建平面图形
         const planeShape = ModelingTool.createPlaneShape(
             points,
-            new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor2() })
+            new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor2(), side: THREE.DoubleSide })
         );
 
         // 将墙体旋转到正确的位置
@@ -78,6 +79,7 @@ export class XthWall extends XthObject {
 
         // 将墙体平移到正确的位置
         planeShape.position.copy(this.startPoint);
+        planeShape.updateMatrixWorld(true);
 
         // 将建模后的物体添加到 selfObject2
         selfObject2.add(planeShape);
@@ -96,10 +98,10 @@ export class XthWall extends XthObject {
         // 定义拉伸轮廓的二维点集
         const halfThickness = this.thickness / 2;
         const points = [
-            new THREE.Vector2(-halfThickness, 0),
-            new THREE.Vector2(halfThickness, 0),
-            new THREE.Vector2(halfThickness, length),
-            new THREE.Vector2(-halfThickness, length)
+            new THREE.Vector2(0, -halfThickness),
+            new THREE.Vector2(0, halfThickness),
+            new THREE.Vector2(length, halfThickness),
+            new THREE.Vector2(length, -halfThickness)
         ];
         // 定义拉伸深度
         const depth = this.height;

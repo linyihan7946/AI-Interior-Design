@@ -124,7 +124,7 @@ export class XthObject extends XthTree {
     setParent(parent: XthTree): void {
         super.setParent(parent);
         if (parent instanceof XthObject) {
-            parent.object3.add(this.object2);
+            parent.object2.add(this.object2);
             parent.object3.add(this.object3);
         }
     }
