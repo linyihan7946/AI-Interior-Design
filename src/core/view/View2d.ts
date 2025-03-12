@@ -6,12 +6,14 @@
  */
 import * as THREE from 'three';
 import { Configure } from '../bottomClass/Configure';
+import { TrackballControls2D } from './trackball/TrackballControls2D';
 
 export class View2d {
     private divId: string;
     public renderer: THREE.WebGLRenderer;
     public scene: THREE.Scene;
     public camera: THREE.OrthographicCamera;
+    private controls: TrackballControls2D; // 添加二维轨迹球控件
 
     /**
      * 构造函数
@@ -48,6 +50,9 @@ export class View2d {
         gridHelper.position.set(0, 0, 0);
         gridHelper.rotation.x = Math.PI / 2; // 沿x轴旋转90度
         this.scene.add(gridHelper);
+
+        // 初始化二维轨迹球控件
+        this.controls = new TrackballControls2D(this.camera, this.renderer.domElement);
     }
 
     /**
