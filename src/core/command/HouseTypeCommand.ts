@@ -20,7 +20,7 @@ export class CreateOneWallCommand extends CommandBase {
         // 创建墙体实例
         const wall = new XthWall();
         wall.startPoint = new THREE.Vector3(0, 0, 0);
-        wall.endPoint = new THREE.Vector3(1000, 0, 0);
+        wall.endPoint = new THREE.Vector3(4000, 0, 0);
         wall.thickness = 120;
         wall.height = 2800;
 

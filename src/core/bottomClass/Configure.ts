@@ -21,6 +21,14 @@ export class Configure extends BaseClass {
     public wallMeshColor3: number = 0x333333; // 默认墙体三维mesh颜色改为深灰色
     public wallLineColor3: number = 0x0000ff; // 默认墙体三维line颜色
 
+    // 添加网格线颜色配置项
+    public gridLineColor2: number = 0x808080; // 默认二维网格线颜色改为深灰色
+    public gridLineColor3: number = 0x808080; // 默认三维网格线颜色改为深灰色
+
+    // 添加网格线等分数配置项
+    public gridDivisions2: number = 100; // 默认二维网格线等分数
+    public gridDivisions3: number = 100; // 默认三维网格线等分数
+
     // 私有构造函数，防止外部实例化
     private constructor(json?: any) {
         super(json);

@@ -6,6 +6,7 @@
  */
 import * as THREE from 'three';
 import { TrackballControls3D } from './trackball/TrackballControls3D';
+import { Configure } from '../bottomClass/Configure';
 
 export class View3d {
     private divId: string;
@@ -26,6 +27,7 @@ export class View3d {
         // 初始化渲染器
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.renderer.setClearColor(0xf0f0f0); // 设置背景色为浅灰色
         this.container.appendChild(this.renderer.domElement);
 
         // 初始化场景
@@ -37,6 +39,13 @@ export class View3d {
         this.camera.position.set(500, -2000, 1300); // 设置相机位置
         this.camera.up.set(0, 0, 1); // 设置相机的 up 向量
         this.camera.lookAt(0, 1, 0); // 设置相机朝向
+
+        // 添加网格线
+        const gridSize = 1.0E5; // 网格尺寸改为 1.0E5
+        const gridHelper = new THREE.GridHelper(gridSize, Configure.Instance.gridDivisions3, Configure.Instance.gridLineColor3, Configure.Instance.gridLineColor3);
+        gridHelper.position.set(0, 0, 0);
+        gridHelper.rotation.x = Math.PI / 2; // 沿x轴旋转90度
+        this.scene.add(gridHelper);
 
         // 初始化轨迹球控件
         this.controls = new TrackballControls3D(this.camera, this.renderer.domElement);

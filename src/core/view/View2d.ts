@@ -5,6 +5,7 @@
  * @Version: 1.0
  */
 import * as THREE from 'three';
+import { Configure } from '../bottomClass/Configure';
 
 export class View2d {
     private divId: string;
@@ -41,10 +42,9 @@ export class View2d {
         this.camera.lookAt(0, 0, 0); // 设置相机朝向
         this.camera.zoom = 1; // 设置相机 zoom 值为 1
 
-        // 添加黑色网格线
-        const gridSize = 1000000; // 网格尺寸放大到 1000000
-        const gridDivisions = 1000; // 等分设置为 1000
-        const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x000000, 0x000000);
+        // 添加网格线
+        const gridSize = 1.0E5; // 网格尺寸改为 1.0E5
+        const gridHelper = new THREE.GridHelper(gridSize, Configure.Instance.gridDivisions2, Configure.Instance.gridLineColor2, Configure.Instance.gridLineColor2);
         gridHelper.position.set(0, 0, 0);
         gridHelper.rotation.x = Math.PI / 2; // 沿x轴旋转90度
         this.scene.add(gridHelper);
