@@ -1,3 +1,9 @@
+/*
+ * @Author: LinYiHan
+ * @Date: 2025-03-07 10:27:22
+ * @Description: 
+ * @Version: 1.0
+ */
 import * as THREE from 'three';
 
 export class View2d {
@@ -12,20 +18,35 @@ export class View2d {
      */
     constructor(divId: string) {
         this.divId = divId;
+        const container = document.getElementById(this.divId);
+
+        if (!container) {
+            throw new Error(`Element with id ${divId} not found`);
+        }
 
         // 初始化渲染器
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById(this.divId)?.appendChild(this.renderer.domElement);
+        this.renderer.setSize(container.clientWidth, container.clientHeight);
+        this.renderer.setClearColor(0xf0f0f0); // 设置背景色为浅灰色
+        container.appendChild(this.renderer.domElement);
 
         // 初始化场景
         this.scene = new THREE.Scene();
 
         // 初始化正交相机
-        const aspect = window.innerWidth / window.innerHeight;
-        this.camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0.1, 1000);
+        const aspect = container.clientWidth / container.clientHeight;
+        this.camera = new THREE.OrthographicCamera(-aspect * 2000, aspect * 2000, 1 * 2000, -1 * 2000, 0.0001, 1000000); // 将 near 和 far 分别修改为 0.0001 和 1000000
         this.camera.position.set(0, 0, 500); // 设置相机位置
         this.camera.lookAt(0, 0, 0); // 设置相机朝向
+        this.camera.zoom = 1; // 设置相机 zoom 值为 1
+
+        // 添加黑色网格线
+        const gridSize = 1000000; // 网格尺寸放大到 1000000
+        const gridDivisions = 1000; // 等分设置为 1000
+        const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x000000, 0x000000);
+        gridHelper.position.set(0, 0, 0);
+        gridHelper.rotation.x = Math.PI / 2; // 沿x轴旋转90度
+        this.scene.add(gridHelper);
     }
 
     /**

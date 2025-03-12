@@ -14,7 +14,7 @@ export class Api {
      * 初始化应用程序
      * @param param 初始化参数
      */
-    public static init(param?: { view3dId?: string }): void {
+    public static init(param?: { view3dId?: string; view2dId?: string }): void {
         this.app = new Application(param);
         this.app.initialize();
     }

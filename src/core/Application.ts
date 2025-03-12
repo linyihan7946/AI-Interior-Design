@@ -206,6 +206,9 @@ export class Application {
         if (this.view3d) {
             this.view3d.render();
         }
+        if (this.view2d) {
+            this.view2d.render();
+        }
     }
 
     /**
