@@ -9,10 +9,18 @@ export class ModelingTool {
      * @param shapeList 二维点集，第一圈是外圈，其余是内圈
      * @returns THREE.BufferGeometry
      */
-    public static CreateShapeGeometry(shapeList: THREE.Vector2[][]): THREE.BufferGeometry {
-        if (shapeList.length === 0) {
+    public static CreateShapeGeometry(shapeList1: THREE.Vector2[][] | THREE.Vector3[][]): THREE.BufferGeometry {
+        if (shapeList1.length === 0) {
             throw new Error('Shape list cannot be empty');
         }
+        const shapeList: THREE.Vector2[][] = [];
+        shapeList1.forEach((shape) => {
+            const shape2: THREE.Vector2[] = [];
+            shape.forEach((point) => {
+                shape2.push(new THREE.Vector2(point.x, point.y));
+            });
+            shapeList.push(shape2);
+        });
 
         // 创建外圈Shape
         const shape = new THREE.Shape(shapeList[0]);
