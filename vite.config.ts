@@ -1,9 +1,3 @@
-/*
- * @Author: LinYiHan
- * @Date: 2025-02-26 13:43:16
- * @Description: 
- * @Version: 1.0
- */
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
@@ -28,5 +22,7 @@ export default defineConfig({
   base: '/', // 确保资源路径正确
   optimizeDeps: {
     include: ['three'] // 添加需要预构建的依赖项
-  }
+  },
+  // 添加 public 目录配置
+  publicDir: 'public'
 });

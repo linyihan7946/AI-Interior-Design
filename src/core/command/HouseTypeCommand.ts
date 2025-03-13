@@ -23,7 +23,7 @@ export class CreateSingleDoorCommand extends CommandBase {
         door.type = OpeningType.SingleDoor;
         door.length = 900;
         door.height = 2100;
-        door.thickness = 200; // 将门的厚度改为200
+        door.thickness = 400; // 将门的厚度改为200
         door.elevation = 0;
 
         // 获取当前场景

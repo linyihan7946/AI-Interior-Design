@@ -65,6 +65,18 @@ export class XthOpening extends XthObject {
         const gltfPath = Configure.Instance.gltfPaths[this.type];
         if (gltfPath) {
             ModelingTool.loadGLTF(gltfPath).then((model) => {
+                // 获取模型的边界框
+                const box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+
+                // 根据模型的默认尺寸和门窗的实际尺寸计算缩放比例
+                const scale = new THREE.Vector3(
+                    this.length / size.x, // 根据实际长度和模型默认长度进行缩放
+                    this.thickness / size.y, // 根据实际高度和模型默认高度进行缩放
+                    this.height / size.z // 根据实际厚度和模型默认厚度进行缩放
+                );
+                model.scale.copy(scale); // 应用缩放比例
                 selfObject3.add(model);
             }).catch((error) => {
                 console.error('Failed to load GLTF model:', error);

@@ -33,6 +33,10 @@ export class View3d {
         // 初始化场景
         this.scene = new THREE.Scene();
 
+        // 添加环境光
+        const ambientLight = new THREE.AmbientLight(0xffffff, Configure.Instance.ambientLightIntensity3); // 使用配置的环境光强度
+        this.scene.add(ambientLight);
+
         // 初始化相机
         const aspect = this.container.clientWidth / this.container.clientHeight;
         this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1.0E7);

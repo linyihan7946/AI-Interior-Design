@@ -10,6 +10,10 @@ import { OpeningType } from '../object/XthOpening';
 export class Configure extends BaseClass {
     private static _instance: Configure = new Configure();
 
+    // 添加环境光强度配置
+    public ambientLightIntensity2: number = 1.0 * Math.PI; // 二维环境光强度
+    public ambientLightIntensity3: number = 1.0 * Math.PI; // 三维环境光强度
+
     // 添加 GLTF 文件路径配置
     public gltfPaths: { [key: number]: string } = {
         [OpeningType.SingleDoor]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb',

@@ -36,6 +36,10 @@ export class View2d {
         // 初始化场景
         this.scene = new THREE.Scene();
 
+        // 添加环境光
+        const ambientLight = new THREE.AmbientLight(0xffffff, Configure.Instance.ambientLightIntensity2); // 使用配置的环境光强度
+        this.scene.add(ambientLight);
+
         // 初始化正交相机
         const aspect = container.clientWidth / container.clientHeight;
         const scale = 2000; // 设置缩放比例为 2000
