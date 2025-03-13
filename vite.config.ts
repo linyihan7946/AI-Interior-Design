@@ -15,8 +15,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3001,
-    host: '127.0.0.1', // 显式指定 host 为 127.0.0.1
+    port: 8080,
+    host: 'sjtest.yfway.com', // 显式指定 host 为 127.0.0.1
     strictPort: true, // 确保端口不被占用时自动切换
     hmr: {
       overlay: false, // 禁用 HMR 错误覆盖层

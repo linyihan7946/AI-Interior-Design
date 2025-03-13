@@ -5,9 +5,21 @@
  * @Version: 1.0
  */
 import { BaseClass } from './BaseClass';
+import { OpeningType } from '../object/XthOpening';
 
 export class Configure extends BaseClass {
     private static _instance: Configure = new Configure();
+
+    // 添加 GLTF 文件路径配置
+    public gltfPaths: { [key: number]: string } = {
+        [OpeningType.SingleDoor]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb',
+        [OpeningType.DoubleDoor]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb',
+        [OpeningType.MotherChildDoor]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb',
+        [OpeningType.SlidingDoor]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb',
+        [OpeningType.BalconyDoor]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb',
+        [OpeningType.StraightWindow]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb',
+        [OpeningType.BayWindow]: 'https://tx-wsai-cdn.yfway.com/168s/gltfs/54cde3a30b7c51621971fdb33947bee4.glb'
+    };
 
     // 添加 view3dId 属性
     public view3dId?: string;
@@ -28,6 +40,8 @@ export class Configure extends BaseClass {
     // 添加网格线等分数配置项
     public gridDivisions2: number = 100; // 默认二维网格线等分数
     public gridDivisions3: number = 100; // 默认三维网格线等分数
+
+    public DRACO_PATH = "https://tx-wsai-cdn.yfway.com/sj/designtool/js/draco171/";
 
     // 私有构造函数，防止外部实例化
     private constructor(json?: any) {

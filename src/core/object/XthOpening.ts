@@ -7,6 +7,8 @@
 import * as THREE from 'three';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
+import { ModelingTool } from '../bottomClass/ModelingTool';
+import { Configure } from '../bottomClass/Configure';
 
 export enum OpeningType {
     SingleDoor = 0,
@@ -42,5 +44,209 @@ export class XthOpening extends XthObject {
             writable: false,
             configurable: true
         });
+    }
+
+    build2d(): void {
+        const selfObject2 = this.getSelfObject2();
+        ModelingTool.removeObject3D(selfObject2);
+
+        const points = this.get2DPoints();
+        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor2(), side: THREE.DoubleSide });
+
+        const planeShape = ModelingTool.createPlaneShape(points, material);
+        
+        selfObject2.add(planeShape);
+    }
+
+    build3d(): void {
+        const selfObject3 = this.getSelfObject3();
+        ModelingTool.removeObject3D(selfObject3);
+
+        const gltfPath = Configure.Instance.gltfPaths[this.type];
+        if (gltfPath) {
+            ModelingTool.loadGLTF(gltfPath).then((model) => {
+                selfObject3.add(model);
+            }).catch((error) => {
+                console.error('Failed to load GLTF model:', error);
+                // 如果加载失败，使用默认的拉伸造型
+                const points = this.get3DPoints();
+                const height = this.height;
+                const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3() });
+                const extrudedShape = ModelingTool.createExtrudedShape(points, height, material);
+                selfObject3.add(extrudedShape);
+            });
+        } else {
+            // 如果没有配置 GLTF 路径，使用默认的拉伸造型
+            const points = this.get3DPoints();
+            const height = this.height;
+            const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3() });
+            const extrudedShape = ModelingTool.createExtrudedShape(points, height, material);
+            selfObject3.add(extrudedShape);
+        }
+    }
+
+    private get2DPoints(): THREE.Vector2[] {
+        const halfLength = this.length / 2;
+        const halfThickness = this.thickness / 2;  // 使用厚度的一半代替高度的一半
+
+        switch (this.type) {
+            case OpeningType.SingleDoor:
+                // 单开门：矩形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, -halfThickness)
+                ];
+            case OpeningType.DoubleDoor:
+                // 双开门：两个矩形拼接
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(0, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(0, halfThickness)
+                ];
+            case OpeningType.MotherChildDoor:
+                // 子母门：主门和子门的组合
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(-halfLength / 2, -halfThickness),
+                    new THREE.Vector2(-halfLength / 2, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(-halfLength / 2, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength / 2, halfThickness)
+                ];
+            case OpeningType.SlidingDoor:
+                // 推拉门：两个矩形拼接
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(0, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(0, halfThickness)
+                ];
+            case OpeningType.BalconyDoor:
+                // 阳台门：矩形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, -halfThickness)
+                ];
+            case OpeningType.StraightWindow:
+                // 平开窗：矩形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, -halfThickness)
+                ];
+            case OpeningType.BayWindow:
+                // 飘窗：多边形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(halfLength, 0),
+                    new THREE.Vector2(0, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, -halfThickness)
+                ];
+            default:
+                throw new Error(`Unsupported opening type: ${this.type}`);
+        }
+    }
+
+    private get3DPoints(): THREE.Vector2[] {
+        const halfLength = this.length / 2;
+        const halfThickness = this.thickness / 2;  // 使用厚度的一半代替高度的一半
+
+        switch (this.type) {
+            case OpeningType.SingleDoor:
+                // 单开门：矩形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness)
+                ];
+            case OpeningType.DoubleDoor:
+                // 双开门：两个矩形拼接
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(0, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(0, halfThickness)
+                ];
+            case OpeningType.MotherChildDoor:
+                // 子母门：主门和子门的组合
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(-halfLength / 2, -halfThickness),
+                    new THREE.Vector2(-halfLength / 2, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength / 2, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength / 2, halfThickness)
+                ];
+            case OpeningType.SlidingDoor:
+                // 推拉门：两个矩形拼接
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(0, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(0, halfThickness)
+                ];
+            case OpeningType.BalconyDoor:
+                // 阳台门：矩形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness)
+                ];
+            case OpeningType.StraightWindow:
+                // 平开窗：矩形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, -halfThickness),
+                    new THREE.Vector2(halfLength, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness)
+                ];
+            case OpeningType.BayWindow:
+                // 飘窗：多边形
+                return [
+                    new THREE.Vector2(-halfLength, -halfThickness),
+                    new THREE.Vector2(0, -halfThickness),
+                    new THREE.Vector2(halfLength, 0),
+                    new THREE.Vector2(0, halfThickness),
+                    new THREE.Vector2(-halfLength, halfThickness)
+                ];
+            default:
+                throw new Error(`Unsupported opening type: ${this.type}`);
+        }
     }
 }

@@ -31,10 +31,10 @@ export class XthObject extends XthTree {
     normalLineColor2: number = 0x0000ff; // 二维正常状态line的颜色
 
     @JsonProperty()
-    normalMeshColor3: number = 0xff0000; // 三维正常状态mesh的颜色
+    normalMeshColor3: number = 0x00ff00; // 三维正常状态mesh的颜色
 
     @JsonProperty()
-    normalLineColor3: number = 0xffff00; // 三维正常状态line的颜色
+    normalLineColor3: number = 0x0000ff; // 三维正常状态line的颜色
 
     [key: string]: any;
     @JsonProperty(false) // 控制object2不导出
@@ -102,8 +102,18 @@ export class XthObject extends XthTree {
         return cloned;
     }
 
+    
+    /**
+     * 矩阵变换
+     *
+     * @param {THREE.Matrix4} matrix 
+     */
     applyMatrix4(matrix: THREE.Matrix4): void {
+        this.matrix2.multiplyMatrices(matrix, this.matrix2);
         this.matrix3.multiplyMatrices(matrix, this.matrix3);
+        // 更新对象的变换
+        this.object2.applyMatrix4(matrix);
+        this.object3.applyMatrix4(matrix);
     }
 
     remove(): void {

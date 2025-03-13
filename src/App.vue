@@ -30,21 +30,22 @@ export default defineComponent({
     const canvas2D = ref<InstanceType<typeof Canvas2D> | null>(null);
 
     onMounted(() => {
-      if (canvas3D.value && canvas2D.value) {
-        if (canvas3D.value && canvas3D.value.canvasRef && canvas2D.value && canvas2D.value.canvas2d) {
-          Api.init({
-            view3dId: canvas3D.value.canvasRef.id,
-            view2dId: canvas2D.value.canvas2d.id
-          });
+        if (canvas3D.value && canvas2D.value) {
+            if (canvas3D.value && canvas3D.value.canvasRef && canvas2D.value && canvas2D.value.canvas2d) {
+                Api.init({
+                    view3dId: canvas3D.value.canvasRef.id,
+                    view2dId: canvas2D.value.canvas2d.id
+                });
+            }
+            Api.executeCommand("newFile", {});
+            Api.executeCommand("createOneWall", {}); // 先创建一面墙
+            Api.executeCommand("createSingleDoor", {}); // 再添加一个门
         }
-        Api.executeCommand("newFile", {});
-        Api.executeCommand("createOneWall", {});
-      }
     });
 
     return {
-      canvas3D,
-      canvas2D
+        canvas3D,
+        canvas2D
     };
   }
 });

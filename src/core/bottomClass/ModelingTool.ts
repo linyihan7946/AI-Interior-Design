@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
+import { Configure } from './Configure';
+
 export class ModelingTool {
     /**
      * 根据二维点集生成带内孔的ShapeGeometry
@@ -47,6 +51,33 @@ export class ModelingTool {
         const extrudeSettings = { depth, bevelEnabled: false };
         const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
         return new THREE.Mesh(geometry, material);
+    }
+
+    /**
+     * 加载 GLTF 模型
+     * @param url GLTF 文件路径
+     * @returns 返回 Promise，解析为加载的模型
+     */
+    public static loadGLTF(url: string): Promise<THREE.Object3D> {
+        return new Promise((resolve, reject) => {
+            const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath(Configure.Instance.DRACO_PATH); // 设置 DRACOLoader 的解码器路径
+            dracoLoader.setDecoderConfig({ "type": "js" }); // 不使用wasm，指定使用js; ljk. 20211023
+            dracoLoader.preload();
+            loader.setDRACOLoader(dracoLoader); // 将 DRACOLoader 实例传递给 GLTFLoader
+
+            loader.load(
+                url,
+                (gltf) => {
+                    resolve(gltf.scene);
+                },
+                undefined,
+                (error) => {
+                    reject(error);
+                }
+            );
+        });
     }
 
     /**

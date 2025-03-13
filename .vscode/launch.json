@@ -5,7 +5,7 @@
       "type": "chrome",
       "request": "launch",
       "name": "Launch Chrome against localhost",
-      "url": "http://127.0.0.1:3001", // 修改为 127.0.0.1 避免可能的 DNS 解析问题
+      "url": "http://sjtest.yfway.com:8080", // 修改为 127.0.0.1 避免可能的 DNS 解析问题
       "webRoot": "${workspaceFolder}"
     }
   ]
