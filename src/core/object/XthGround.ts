@@ -92,12 +92,20 @@ export class XthGround extends XthObject {
         ModelingTool.removeObject3D(selfObject2);
 
         // 获取外圈和内孔的点集
-        const outlinePoints = this._outline.getDividedPoints(10);
-        const holesPoints = this._holes.map(hole => hole.getDividedPoints(10));
+        const outlinePoints3D = this._outline.getDividedPoints(10);
+        const outlinePoints = outlinePoints3D.map(point => new THREE.Vector2(point.x, point.y));
+        const holesPoints3D = this._holes.map(hole => hole.getDividedPoints(10));
+        const holesPoints = holesPoints3D.map(holePoints => holePoints.map(point => new THREE.Vector2(point.x, point.y)));
+
+        // 使用配置中的地面贴图
+        const texture = new THREE.TextureLoader().load(Configure.Instance.groundTexturePath);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
 
         // 创建二维图形
-        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor2(), side: THREE.DoubleSide });
         const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
+        ModelingTool.setAutoUV(shapeGeometry, 800, 800);
         const mesh = new THREE.Mesh(shapeGeometry, material);
 
         selfObject2.add(mesh);
@@ -114,10 +122,15 @@ export class XthGround extends XthObject {
         const outlinePoints = this._outline.getDividedPoints(10);
         const holesPoints = this._holes.map(hole => hole.getDividedPoints(10));
 
-        // 创建三维图形
-        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3(), side: THREE.DoubleSide });
-        const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
+        // 使用配置中的地面贴图
+        const texture = new THREE.TextureLoader().load(Configure.Instance.groundTexturePath);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        const material = new THREE.MeshBasicMaterial({ map: texture });
 
+        // 创建三维图形
+        const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
+        ModelingTool.setAutoUV(shapeGeometry, 800, 800);
         const mesh = new THREE.Mesh(shapeGeometry, material);
 
         selfObject3.add(mesh);

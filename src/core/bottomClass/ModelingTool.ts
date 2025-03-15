@@ -54,7 +54,7 @@ export class ModelingTool {
      * @param material 材质，用于渲染拉伸造型
      * @returns 返回创建的拉伸造型
      */
-    public static createExtrudedShape(points: THREE.Vector2[], depth: number, material: THREE.Material): THREE.Object3D {
+    public static createExtrudedShape(points: THREE.Vector2[], depth: number, material: THREE.Material): THREE.Mesh {
         const shape = new THREE.Shape(points);
         const extrudeSettings = { depth, bevelEnabled: false };
         const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
@@ -86,6 +86,38 @@ export class ModelingTool {
                 }
             );
         });
+    }
+
+    /**
+     * 根据贴图长宽和平面BufferGeometry的长宽自动设置UV
+     * @param geometry 平面BufferGeometry
+     * @param textureWidth 贴图的宽度
+     * @param textureHeight 贴图的高度
+     */
+    public static setAutoUV(geometry: THREE.BufferGeometry, textureWidth: number, textureHeight: number): void {
+        const positions = geometry.attributes.position.array;
+        const uvs = new Float32Array(positions.length / 3 * 2);
+
+        // 获取平面的边界框
+        const box = new THREE.Box3().setFromBufferAttribute(geometry.attributes.position as THREE.BufferAttribute);
+        const width = box.max.x - box.min.x;
+        const height = box.max.y - box.min.y;
+
+        // 计算UV比例
+        const uvScaleX = textureWidth;// / width;
+        const uvScaleY = textureHeight;// / height;
+
+        for (let i = 0; i < positions.length / 3; i++) {
+            const x = positions[i * 3];
+            const y = positions[i * 3 + 1];
+
+            // 计算UV坐标，从左下角开始
+            uvs[i * 2] = (x - box.min.x) / uvScaleX;
+            uvs[i * 2 + 1] = (y - box.min.y) / uvScaleY;
+        }
+
+        // 设置UV属性
+        geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     }
 
     /**

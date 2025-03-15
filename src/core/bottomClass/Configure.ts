@@ -51,6 +51,12 @@ export class Configure extends BaseClass {
 
     public DRACO_PATH = "https://tx-wsai-cdn.yfway.com/sj/designtool/js/draco171/";
 
+    // 添加墙面贴图路径配置
+    public wallTexturePath: string = 'https://tx-wsai-cdn.yfway.com/168s/images/824fba06b8dc4696d98eacfacca15edc.jpg?imageMogr2/thumbnail/256x256';
+
+    // 添加地面贴图路径配置
+    public groundTexturePath: string = 'https://tx-wsai-cdn.yfway.com/168s/images/407e31f59b7bd04c572863138fe7f9ea.jpg?imageMogr2/thumbnail/260x260';
+
     // 私有构造函数，防止外部实例化
     private constructor(json?: any) {
         super(json);

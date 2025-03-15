@@ -113,11 +113,18 @@ export class XthWall extends XthObject {
         ];
         // 定义拉伸深度
         const depth = this.height;
-        // 定义材质
-        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3() });
+
+        // 使用配置中的墙面贴图
+        const texture = new THREE.TextureLoader().load(Configure.Instance.wallTexturePath);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        const material = new THREE.MeshBasicMaterial({ map: texture });
 
         // 调用 ModelingTool 中的接口来创建拉伸造型
         const extrudedShape = ModelingTool.createExtrudedShape(points, depth, material);
+
+        // 使用 setAutoUV 函数设置UV
+        ModelingTool.setAutoUV(extrudedShape.geometry, 800, 800);
 
         // 构造变换矩阵
         const angle = Math.atan2(direction.y, direction.x);
