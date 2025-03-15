@@ -9,6 +9,8 @@ import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { ModelingTool } from '../bottomClass/ModelingTool';
 import { Configure } from '../bottomClass/Configure';
+import { XthWall } from './XthWall';
+import { Geometry } from '../bottomClass/Geometry';
 
 export enum OpeningType {
     SingleDoor = 0,
@@ -95,6 +97,35 @@ export class XthOpening extends XthObject {
             const extrudedShape = ModelingTool.createExtrudedShape(points, height, material);
             selfObject3.add(extrudedShape);
         }
+    }
+
+    /**
+     * 停靠到指定墙体
+     * @param wall 要停靠的墙体
+     */
+    public dockToWall(wall: XthWall): void {
+        // 计算墙体的方向向量
+        const wallDirection = new THREE.Vector3().subVectors(wall.endPoint, wall.startPoint).normalize();
+
+        // 计算门窗的中心点
+        const doorCenter = new THREE.Vector3().applyMatrix4(this.matrix3);
+
+        // 使用 Geometry.projectPointToLine 计算投影点
+        const projectedPoint = Geometry.projectPointToLine(doorCenter, {
+            start: wall.startPoint,
+            end: wall.endPoint
+        });
+
+        // 计算门窗的旋转角度以适配墙体的方向
+        const angle = Math.atan2(wallDirection.y, wallDirection.x);
+
+        // 设置门窗的位置和旋转
+        const matrix = this.matrix3.clone().invert().premultiply(new THREE.Matrix4().makeRotationZ(-angle)).premultiply(new THREE.Matrix4().setPosition(projectedPoint));
+        
+        this.applyMatrix4(matrix);
+
+        // 重建门窗
+        this.rebuild();
     }
 
     private get2DPoints(): THREE.Vector2[] {

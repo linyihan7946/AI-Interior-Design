@@ -38,8 +38,11 @@ export default defineComponent({
                 });
             }
             Api.executeCommand("newFile", {});
-            Api.executeCommand("createOneWall", {}); // 先创建一面墙
-            Api.executeCommand("createSingleDoor", {}); // 再添加一个门
+            Api.executeCommand("createRectangularRoom", {}); // 只调用创建矩形房间命令
+            // Api.executeCommand("createOneWall", {}); // 先创建一面墙
+            // Api.executeCommand("createSingleDoor", {}); // 再添加一个门
+            // Api.executeCommand("createGround", {}); // 最后创建地面
+
         }
     });
 

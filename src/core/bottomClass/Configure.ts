@@ -45,6 +45,10 @@ export class Configure extends BaseClass {
     public gridDivisions2: number = 100; // 默认二维网格线等分数
     public gridDivisions3: number = 100; // 默认三维网格线等分数
 
+    // 添加地面颜色配置项
+    public groundMeshColor2: number = 0xcccccc; // 默认二维地面mesh颜色改为浅灰色
+    public groundMeshColor3: number = 0xcccccc; // 默认三维地面mesh颜色改为浅灰色
+
     public DRACO_PATH = "https://tx-wsai-cdn.yfway.com/sj/designtool/js/draco171/";
 
     // 私有构造函数，防止外部实例化

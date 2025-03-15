@@ -1,7 +1,7 @@
 /*
  * @Author: LinYiHan
  * @Date: 2025-03-13 18:11:11
- * @Description: 
+ * @Description: 地面物体类
  * @Version: 1.0
  */
 import * as THREE from 'three';
@@ -9,8 +9,9 @@ import { ModelingTool } from '../bottomClass/ModelingTool';
 import { XthCompositeLine } from './XthCompositeLine';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
+import { Configure } from '../bottomClass/Configure';
 
-export class XthPlane extends XthObject {
+export class XthGround extends XthObject {
     // 外圈，不用序列化
     @JsonProperty(false)
     private _outline: XthCompositeLine;
@@ -24,9 +25,17 @@ export class XthPlane extends XthObject {
         this._outline = json?.outline || new XthCompositeLine();
         this._holes = json?.holes || [];
 
+        // 如果没有传入颜色值，则使用 Configure 中的默认值
+        if (!json || json.normalMeshColor2 === undefined) {
+            this.normalMeshColor2 = Configure.Instance.groundMeshColor2;
+        }
+        if (!json || json.normalMeshColor3 === undefined) {
+            this.normalMeshColor3 = Configure.Instance.groundMeshColor3;
+        }
+
         // 确保构造函数的名字不会被改变
         Object.defineProperty(this.constructor, 'name', {
-            value: 'XthPlane',
+            value: 'XthGround',
             writable: false,
             configurable: true
         });
@@ -60,7 +69,7 @@ export class XthPlane extends XthObject {
      * 添加内孔
      * @param hole 要添加的内孔
      */
-    public addHole(hole: XthCompositeLine): void {
+    public addHhole(hole: XthCompositeLine): void {
         this._holes.push(hole);
     }
 
@@ -106,8 +115,9 @@ export class XthPlane extends XthObject {
         const holesPoints = this._holes.map(hole => hole.getDividedPoints(10));
 
         // 创建三维图形
-        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3() });
+        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3(), side: THREE.DoubleSide });
         const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
+
         const mesh = new THREE.Mesh(shapeGeometry, material);
 
         selfObject3.add(mesh);

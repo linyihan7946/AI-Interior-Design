@@ -10,6 +10,8 @@ import { Command } from './CommandRegistry';
 import { Api } from '../Api';
 import { XthWall } from '../object/XthWall';
 import { XthOpening, OpeningType } from '../object/XthOpening';
+import { XthGround } from '../object/XthGround';
+import { XthCompositeLine } from '../object/XthCompositeLine';
 
 @Command('createSingleDoor')
 export class CreateSingleDoorCommand extends CommandBase {
@@ -82,6 +84,125 @@ export class CreateOneWallCommand extends CommandBase {
         } else {
             console.warn('Scene is not initialized');
         }
+    }
+}
+
+@Command('createGround')
+export class CreateGroundCommand extends CommandBase {
+    constructor() {
+        super({ name: 'CreateGroundCommand', shouldRecordUndo: true, shouldCancelPreviousCommand: false });
+    }
+
+    public executeCommand(...args: any[]): void {
+        // 创建地面实例
+        const ground = new XthGround();
+        const outline = new XthCompositeLine();
+        outline.addPoint(new THREE.Vector3(0, 0, 0));
+        outline.addPoint(new THREE.Vector3(4000, 0, 0));
+        outline.addPoint(new THREE.Vector3(4000, 3000, 0));
+        outline.addPoint(new THREE.Vector3(0, 3000, 0));
+        outline.addPoint(new THREE.Vector3(0, 0, 0));
+        ground.setOutline(outline);
+
+        // 获取当前场景
+        const sceneManager = Api.getApp().sceneManager;
+        const scene = sceneManager.getScene();
+
+        // 将地面添加到场景中
+        if (scene) {
+            scene.addChild(ground);
+            ground.rebuild();
+            console.log('Ground created and added to the scene');
+        } else {
+            console.warn('Scene is not initialized');
+        }
+    }
+}
+
+@Command('createRectangularRoom')
+export class CreateRectangularRoomCommand extends CommandBase {
+    constructor() {
+        super({ name: 'CreateRectangularRoomCommand', shouldRecordUndo: true, shouldCancelPreviousCommand: false });
+    }
+
+    public executeCommand(...args: any[]): void {
+        const sceneManager = Api.getApp().sceneManager;
+        const scene = sceneManager.getScene();
+
+        if (!scene) {
+            console.warn('Scene is not initialized');
+            return;
+        }
+
+        // 创建四面墙
+        const wallLength = 4000;
+        const wallHeight = 2800;
+        const wallThickness = 120;
+
+        const leftWall = new XthWall();
+        leftWall.startPoint = new THREE.Vector3(-wallThickness / 2, 0, 0);
+        leftWall.endPoint = new THREE.Vector3(-wallThickness / 2, wallLength, 0);
+        leftWall.thickness = wallThickness;
+        leftWall.height = wallHeight;
+
+        const rightWall = new XthWall();
+        rightWall.startPoint = new THREE.Vector3(wallLength + wallThickness / 2, 0, 0);
+        rightWall.endPoint = new THREE.Vector3(wallLength + wallThickness / 2, wallLength, 0);
+        rightWall.thickness = wallThickness;
+        rightWall.height = wallHeight;
+
+        const topWall = new XthWall();
+        topWall.startPoint = new THREE.Vector3(0, wallLength + wallThickness / 2, 0);
+        topWall.endPoint = new THREE.Vector3(wallLength, wallLength + wallThickness / 2, 0);
+        topWall.thickness = wallThickness;
+        topWall.height = wallHeight;
+
+        const bottomWall = new XthWall();
+        bottomWall.startPoint = new THREE.Vector3(0, -wallThickness / 2, 0);
+        bottomWall.endPoint = new THREE.Vector3(wallLength, -wallThickness / 2, 0);
+        bottomWall.thickness = wallThickness;
+        bottomWall.height = wallHeight;
+
+        scene.addChild(leftWall);
+        scene.addChild(rightWall);
+        scene.addChild(topWall);
+        scene.addChild(bottomWall);
+
+        // 创建地面
+        const ground = new XthGround();
+        const outline = new XthCompositeLine();
+        outline.addPoint(new THREE.Vector3(0, 0, 0));
+        outline.addPoint(new THREE.Vector3(wallLength, 0, 0));
+        outline.addPoint(new THREE.Vector3(wallLength, wallLength, 0));
+        outline.addPoint(new THREE.Vector3(0, wallLength, 0));
+        outline.addPoint(new THREE.Vector3(0, 0, 0));
+        ground.setOutline(outline);
+        scene.addChild(ground);
+
+        // 在左边的墙上中间位置添加一个单开门
+        const door = new XthOpening();
+        door.type = OpeningType.SingleDoor;
+        door.length = 900;
+        door.height = 2100;
+        door.thickness = 200;
+        door.elevation = 0;
+
+        const wallCenter = new THREE.Vector3().addVectors(leftWall.startPoint, leftWall.endPoint).multiplyScalar(0.5);
+        const matrix = new THREE.Matrix4().makeTranslation(wallCenter.x, wallCenter.y, wallCenter.z);
+        door.applyMatrix4(matrix);
+        // 调用停靠墙体函数
+        door.dockToWall(leftWall);
+        leftWall.addChild(door);
+
+        // 重建所有对象
+        leftWall.rebuild();
+        rightWall.rebuild();
+        topWall.rebuild();
+        bottomWall.rebuild();
+        ground.rebuild();
+        door.rebuild();
+
+        console.log('Rectangular room created with a single door on the left wall');
     }
 }
 

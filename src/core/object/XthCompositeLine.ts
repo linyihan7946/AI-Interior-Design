@@ -33,6 +33,26 @@ export class XthCompositeLine extends XthObject {
     }
 
     /**
+     * 添加点，并自动生成线段
+     * @param point 要添加的点
+     */
+    public addPoint(point: THREE.Vector3): void {
+        const lines = this.getLines();
+        if (lines.length > 0) {
+            const lastLine = lines[lines.length - 1];
+            const newLine = new XthLine();
+            newLine.startPt = lastLine.endPt.clone();
+            newLine.endPt = point.clone();
+            this.addLine(newLine);
+        } else {
+            const newLine = new XthLine();
+            newLine.startPt = point.clone();
+            newLine.endPt = point.clone();
+            this.addLine(newLine);
+        }
+    }
+
+    /**
      * 获取所有线段集合
      * @returns 返回所有线段集合
      */

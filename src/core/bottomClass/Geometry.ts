@@ -265,4 +265,20 @@ export class Geometry {
 
         return offsetPoints;
     }
+
+    /**
+     * 计算点在直线上的投影点
+     * @param point 点
+     * @param line 线段，包含起点和终点
+     * @returns 投影点
+     */
+    public static projectPointToLine(
+        point: THREE.Vector3,
+        line: { start: THREE.Vector3; end: THREE.Vector3 }
+    ): THREE.Vector3 {
+        const lineDirection = new THREE.Vector3().subVectors(line.end, line.start).normalize();
+        const pointToStart = new THREE.Vector3().subVectors(point, line.start);
+        const projectionLength = pointToStart.dot(lineDirection);
+        return new THREE.Vector3().copy(line.start).addScaledVector(lineDirection, projectionLength);
+    }
 }

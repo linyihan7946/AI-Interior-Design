@@ -57,14 +57,17 @@ export class XthWall extends XthObject {
         const length = direction.length();
         direction.normalize();
 
-        // 计算墙体的二维点集
+        // 计算墙体的中点
+        const midPoint = new THREE.Vector3().addVectors(this.startPoint, this.endPoint).multiplyScalar(0.5);
+
+        // 计算墙体的二维点集（水平方向，以中点为中心）
         const halfThickness = this.thickness / 2;
         const points = [
-            new THREE.Vector2(0, -halfThickness),
-            new THREE.Vector2(0, halfThickness),
-            new THREE.Vector2(length, halfThickness),
-            new THREE.Vector2(length, -halfThickness),
-            new THREE.Vector2(0, -halfThickness),
+            new THREE.Vector2(-length / 2, -halfThickness),
+            new THREE.Vector2(-length / 2, halfThickness),
+            new THREE.Vector2(length / 2, halfThickness),
+            new THREE.Vector2(length / 2, -halfThickness),
+            new THREE.Vector2(-length / 2, -halfThickness),
         ];
 
         // 调用 ModelingTool 中的接口来创建平面图形
@@ -73,12 +76,14 @@ export class XthWall extends XthObject {
             new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor2(), side: THREE.DoubleSide })
         );
 
-        // 将墙体旋转到正确的位置
+        // 构造变换矩阵
         const angle = Math.atan2(direction.y, direction.x);
-        planeShape.rotation.z = -angle;
+        const rotationMatrix = new THREE.Matrix4().makeRotationZ(-angle);
+        const translationMatrix = new THREE.Matrix4().makeTranslation(midPoint.x, midPoint.y, midPoint.z);
+        const transformMatrix = translationMatrix.multiply(rotationMatrix);
 
-        // 将墙体平移到正确的位置
-        planeShape.position.copy(this.startPoint);
+        // 应用变换矩阵到 planeShape
+        planeShape.applyMatrix4(transformMatrix);
         planeShape.updateMatrixWorld(true);
 
         // 将建模后的物体添加到 selfObject2
@@ -95,13 +100,16 @@ export class XthWall extends XthObject {
         const length = direction.length();
         direction.normalize();
 
-        // 定义拉伸轮廓的二维点集
+        // 计算墙体的中点
+        const midPoint = new THREE.Vector3().addVectors(this.startPoint, this.endPoint).multiplyScalar(0.5);
+
+        // 定义拉伸轮廓的二维点集（水平方向，以中点为中心）
         const halfThickness = this.thickness / 2;
         const points = [
-            new THREE.Vector2(0, -halfThickness),
-            new THREE.Vector2(0, halfThickness),
-            new THREE.Vector2(length, halfThickness),
-            new THREE.Vector2(length, -halfThickness)
+            new THREE.Vector2(-length / 2, -halfThickness),
+            new THREE.Vector2(-length / 2, halfThickness),
+            new THREE.Vector2(length / 2, halfThickness),
+            new THREE.Vector2(length / 2, -halfThickness)
         ];
         // 定义拉伸深度
         const depth = this.height;
@@ -111,12 +119,15 @@ export class XthWall extends XthObject {
         // 调用 ModelingTool 中的接口来创建拉伸造型
         const extrudedShape = ModelingTool.createExtrudedShape(points, depth, material);
 
-        // 将墙体旋转到正确的位置
+        // 构造变换矩阵
         const angle = Math.atan2(direction.y, direction.x);
-        extrudedShape.rotation.z = -angle;
+        const rotationMatrix = new THREE.Matrix4().makeRotationZ(-angle);
+        const translationMatrix = new THREE.Matrix4().makeTranslation(midPoint.x, midPoint.y, midPoint.z);
+        const transformMatrix = translationMatrix.multiply(rotationMatrix);
 
-        // 将墙体平移到正确的位置
-        extrudedShape.position.copy(this.startPoint);
+        // 应用变换矩阵到 extrudedShape
+        extrudedShape.applyMatrix4(transformMatrix);
+        extrudedShape.updateMatrixWorld(true);
 
         // 将建模后的物体添加到 selfObject3
         selfObject3.add(extrudedShape);
