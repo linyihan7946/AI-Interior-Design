@@ -1,19 +1,21 @@
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
 
 export class Cube {
-  private scene: THREE.Scene;
-  private cube: THREE.Mesh;
+  private scene: BABYLON.Scene;
+  private cube: BABYLON.Mesh;
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: BABYLON.Scene) {
     this.scene = scene;
     this.cube = this.createCube();
-    this.scene.add(this.cube);
+    this.scene.addMesh(this.cube);
   }
 
-  private createCube(): THREE.Mesh {
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    return new THREE.Mesh(geometry, material);
+  private createCube(): BABYLON.Mesh {
+    const cube = BABYLON.MeshBuilder.CreateBox("cube", { size: 1 }, this.scene);
+    const material = new BABYLON.StandardMaterial("cubeMaterial", this.scene);
+    material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+    cube.material = material;
+    return cube;
   }
 
   public animate(): void {

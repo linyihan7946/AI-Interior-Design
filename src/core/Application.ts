@@ -203,12 +203,12 @@ export class Application {
     public step(): void {
         // 在这里添加每帧需要执行的逻辑
         // 例如更新场景、渲染等
-        if (this.view3d) {
-            this.view3d.render();
-        }
-        if (this.view2d) {
-            this.view2d.render();
-        }
+        // if (this.view3d) {
+        //     this.view3d.render();
+        // }
+        // if (this.view2d) {
+        //     this.view2d.render();
+        // }
     }
 
     /**

@@ -4,11 +4,12 @@
  * @Description: 复合线类，由多段线段组合而成
  * @Version: 1.0
  */
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { XthLine } from './XthLine';
 import { ModelingTool } from '../bottomClass/ModelingTool';
+import { MaterialNameList } from '../bottomClass/MaterialNameList';
 
 export class XthCompositeLine extends XthObject {
     @JsonProperty()
@@ -33,26 +34,6 @@ export class XthCompositeLine extends XthObject {
     }
 
     /**
-     * 添加点，并自动生成线段
-     * @param point 要添加的点
-     */
-    public addPoint(point: THREE.Vector3): void {
-        const lines = this.getLines();
-        if (lines.length > 0) {
-            const lastLine = lines[lines.length - 1];
-            const newLine = new XthLine();
-            newLine.startPt = lastLine.endPt.clone();
-            newLine.endPt = point.clone();
-            this.addLine(newLine);
-        } else {
-            const newLine = new XthLine();
-            newLine.startPt = point.clone();
-            newLine.endPt = point.clone();
-            this.addLine(newLine);
-        }
-    }
-
-    /**
      * 获取所有线段集合
      * @returns 返回所有线段集合
      */
@@ -65,8 +46,8 @@ export class XthCompositeLine extends XthObject {
      * @param segments 分段数
      * @returns 返回等分点集
      */
-    public getDividedPoints(segments: number): THREE.Vector3[] {
-        const points: THREE.Vector3[] = [];
+    public getDividedPoints(segments: number): BABYLON.Vector3[] {
+        const points: BABYLON.Vector3[] = [];
         const lines = this.getLines();
 
         for (const line of lines) {
@@ -101,33 +82,29 @@ export class XthCompositeLine extends XthObject {
         return this._isClosed;
     }
 
-    /**
-     * 构建二维图形
-     */
-    public build2d(): void {
+    public build2d(scene2: BABYLON.Scene | undefined): void {
         const selfObject2 = this.getSelfObject2();
         ModelingTool.removeObject3D(selfObject2);
 
         const points = this.getDividedPoints(10); // 默认分为10段
-        const material = new THREE.LineBasicMaterial({ color: this.getNormalLineColor2() });
-
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, material);
-        selfObject2.add(line);
+ 
+        const line = BABYLON.MeshBuilder.CreateLines("lines", { points });  
+        const material = new BABYLON.StandardMaterial(MaterialNameList.LINE_MATERIAL, scene2);
+        material.diffuseColor = this.getNormalLineColor2();
+        line.material = material;
+        line.parent = selfObject2;
     }
 
-    /**
-     * 构建三维图形
-     */
-    public build3d(): void {
+    public build3d(scene3: BABYLON.Scene | undefined): void {
         const selfObject3 = this.getSelfObject3();
         ModelingTool.removeObject3D(selfObject3);
 
         const points = this.getDividedPoints(10); // 默认分为10段
-        const material = new THREE.LineBasicMaterial({ color: this.getNormalLineColor3() });
 
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, material);
-        selfObject3.add(line);
+        const line = BABYLON.MeshBuilder.CreateLines("lines", { points });  
+        const material = new BABYLON.StandardMaterial(MaterialNameList.LINE_MATERIAL, scene3);
+        material.diffuseColor = this.getNormalLineColor3();
+        line.material = material;
+        line.parent = selfObject3;
     }
 }

@@ -4,23 +4,14 @@
  * @Description: 
  * @Version: 1.0
  */
-import * as THREE from 'three';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { ModelingTool } from '../bottomClass/ModelingTool';
 import { Configure } from '../bottomClass/Configure';
 import { XthWall } from './XthWall';
 import { Geometry } from '../bottomClass/Geometry';
-
-export enum OpeningType {
-    SingleDoor = 0,
-    DoubleDoor = 1,
-    MotherChildDoor = 2,
-    SlidingDoor = 3,
-    BalconyDoor = 4,
-    StraightWindow = 5,
-    BayWindow = 6
-}
+import * as BABYLON from 'babylonjs';
+import { OpeningType } from '../enum/OpeningType';
 
 export class XthOpening extends XthObject {
     @JsonProperty()
@@ -48,19 +39,23 @@ export class XthOpening extends XthObject {
         });
     }
 
-    build2d(): void {
+    build2d(scene2?: BABYLON.Scene): void {
         const selfObject2 = this.getSelfObject2();
         ModelingTool.removeObject3D(selfObject2);
 
         const points = this.get2DPoints();
-        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor2(), side: THREE.DoubleSide });
-
-        const planeShape = ModelingTool.createPlaneShape(points, material);
-        
-        selfObject2.add(planeShape);
+        const material = new BABYLON.StandardMaterial("material", scene2);
+        material.diffuseColor = this.getNormalMeshColor2();
+        material.emissiveColor = this.getNormalMeshColor2();
+        material.disableLighting = true;
+        const planeShape = ModelingTool.createPlaneShape(points, scene2);
+        const matrix = BABYLON.Matrix.Translation(0, 0, 10);
+        ModelingTool.applyMatrix4(planeShape, matrix);
+        planeShape.material = material;
+        planeShape.parent = selfObject2;
     }
 
-    build3d(): void {
+    build3d(scene3?: BABYLON.Scene): void {
         const selfObject3 = this.getSelfObject3();
         ModelingTool.removeObject3D(selfObject3);
 
@@ -68,34 +63,40 @@ export class XthOpening extends XthObject {
         if (gltfPath) {
             ModelingTool.loadGLTF(gltfPath).then((model) => {
                 // 获取模型的边界框
-                const box = new THREE.Box3().setFromObject(model);
-                const size = new THREE.Vector3();
-                box.getSize(size);
+                const boundingInfo = model.getBoundingInfo();
+                const boundingBox = boundingInfo.boundingBox;
+                const size = boundingBox.maximum.subtract(boundingBox.minimum);
 
                 // 根据模型的默认尺寸和门窗的实际尺寸计算缩放比例
-                const scale = new THREE.Vector3(
+                const scale = new BABYLON.Vector3(
                     this.length / size.x, // 根据实际长度和模型默认长度进行缩放
                     this.thickness / size.y, // 根据实际高度和模型默认高度进行缩放
                     this.height / size.z // 根据实际厚度和模型默认厚度进行缩放
                 );
-                model.scale.copy(scale); // 应用缩放比例
-                selfObject3.add(model);
+                model.scaling = scale; // 应用缩放比例
+                selfObject3.addChild(model);
             }).catch((error) => {
                 console.error('Failed to load GLTF model:', error);
                 // 如果加载失败，使用默认的拉伸造型
                 const points = this.get3DPoints();
                 const height = this.height;
-                const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3() });
-                const extrudedShape = ModelingTool.createExtrudedShape(points, height, material);
-                selfObject3.add(extrudedShape);
+                const material = new BABYLON.StandardMaterial("material", scene3);
+                material.diffuseColor = this.getNormalMeshColor3();
+                material.emissiveColor = this.getNormalMeshColor3();
+                material.disableLighting = true;
+                const extrudedShape = ModelingTool.createExtrudedShape(points, height, material, scene3);
+                selfObject3.addChild(extrudedShape);
             });
         } else {
             // 如果没有配置 GLTF 路径，使用默认的拉伸造型
             const points = this.get3DPoints();
             const height = this.height;
-            const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3() });
-            const extrudedShape = ModelingTool.createExtrudedShape(points, height, material);
-            selfObject3.add(extrudedShape);
+            const material = new BABYLON.StandardMaterial("material", scene3);
+            material.diffuseColor = this.getNormalMeshColor3();
+            material.emissiveColor = this.getNormalMeshColor3();
+            material.disableLighting = true;
+            const extrudedShape = ModelingTool.createExtrudedShape(points, height, material, scene3);
+            selfObject3.addChild(extrudedShape);
         }
     }
 
@@ -105,30 +106,27 @@ export class XthOpening extends XthObject {
      */
     public dockToWall(wall: XthWall): void {
         // 计算墙体的方向向量
-        const wallDirection = new THREE.Vector3().subVectors(wall.endPoint, wall.startPoint).normalize();
+        const wallDirection = wall.endPoint.subtract(wall.startPoint).normalize();
 
         // 计算门窗的中心点
-        const doorCenter = new THREE.Vector3().applyMatrix4(this.matrix3);
+        
+        const doorCenter = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(0, 0, 0), this.matrix3);
 
         // 使用 Geometry.projectPointToLine 计算投影点
         const projectedPoint = Geometry.projectPointToLine(doorCenter, {
             start: wall.startPoint,
             end: wall.endPoint
-        });
+        }).subtract(wall.startPoint.add(wall.endPoint).multiplyByFloats(0.5, 0.5, 0.5));
 
         // 计算门窗的旋转角度以适配墙体的方向
         const angle = Math.atan2(wallDirection.y, wallDirection.x);
 
         // 设置门窗的位置和旋转
-        const matrix = this.matrix3.clone().invert().premultiply(new THREE.Matrix4().makeRotationZ(-angle)).premultiply(new THREE.Matrix4().setPosition(projectedPoint));
-        
+        const matrix = this.matrix3.clone().invert().multiply(BABYLON.Matrix.RotationZ(-angle)).multiply(BABYLON.Matrix.Translation(projectedPoint.x, projectedPoint.y, projectedPoint.z));
         this.applyMatrix4(matrix);
-
-        // 重建门窗
-        this.rebuild();
     }
 
-    private get2DPoints(): THREE.Vector2[] {
+    private get2DPoints(): BABYLON.Vector2[] {
         const halfLength = this.length / 2;
         const halfThickness = this.thickness / 2;  // 使用厚度的一半代替高度的一半
 
@@ -136,85 +134,85 @@ export class XthOpening extends XthObject {
             case OpeningType.SingleDoor:
                 // 单开门：矩形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, -halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, -halfThickness)
                 ];
             case OpeningType.DoubleDoor:
                 // 双开门：两个矩形拼接
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(0, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(0, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(0, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(0, halfThickness)
                 ];
             case OpeningType.MotherChildDoor:
                 // 子母门：主门和子门的组合
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(-halfLength / 2, -halfThickness),
-                    new THREE.Vector2(-halfLength / 2, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(-halfLength / 2, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength / 2, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, -halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, halfThickness)
                 ];
             case OpeningType.SlidingDoor:
                 // 推拉门：两个矩形拼接
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(0, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(0, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(0, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(0, halfThickness)
                 ];
             case OpeningType.BalconyDoor:
                 // 阳台门：矩形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, -halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, -halfThickness)
                 ];
             case OpeningType.StraightWindow:
                 // 平开窗：矩形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, -halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, -halfThickness)
                 ];
             case OpeningType.BayWindow:
                 // 飘窗：多边形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(halfLength, 0),
-                    new THREE.Vector2(0, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, -halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(halfLength, 0),
+                    new BABYLON.Vector2(0, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, -halfThickness)
                 ];
             default:
                 throw new Error(`Unsupported opening type: ${this.type}`);
         }
     }
 
-    private get3DPoints(): THREE.Vector2[] {
+    private get3DPoints(): BABYLON.Vector2[] {
         const halfLength = this.length / 2;
         const halfThickness = this.thickness / 2;  // 使用厚度的一半代替高度的一半
 
@@ -222,71 +220,71 @@ export class XthOpening extends XthObject {
             case OpeningType.SingleDoor:
                 // 单开门：矩形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness)
                 ];
             case OpeningType.DoubleDoor:
                 // 双开门：两个矩形拼接
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(0, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(0, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(0, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(0, halfThickness)
                 ];
             case OpeningType.MotherChildDoor:
                 // 子母门：主门和子门的组合
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(-halfLength / 2, -halfThickness),
-                    new THREE.Vector2(-halfLength / 2, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength / 2, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength / 2, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, -halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength / 2, halfThickness)
                 ];
             case OpeningType.SlidingDoor:
                 // 推拉门：两个矩形拼接
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(0, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(0, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(0, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(0, halfThickness)
                 ];
             case OpeningType.BalconyDoor:
                 // 阳台门：矩形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness)
                 ];
             case OpeningType.StraightWindow:
                 // 平开窗：矩形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, -halfThickness),
-                    new THREE.Vector2(halfLength, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, -halfThickness),
+                    new BABYLON.Vector2(halfLength, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness)
                 ];
             case OpeningType.BayWindow:
                 // 飘窗：多边形
                 return [
-                    new THREE.Vector2(-halfLength, -halfThickness),
-                    new THREE.Vector2(0, -halfThickness),
-                    new THREE.Vector2(halfLength, 0),
-                    new THREE.Vector2(0, halfThickness),
-                    new THREE.Vector2(-halfLength, halfThickness)
+                    new BABYLON.Vector2(-halfLength, -halfThickness),
+                    new BABYLON.Vector2(0, -halfThickness),
+                    new BABYLON.Vector2(halfLength, 0),
+                    new BABYLON.Vector2(0, halfThickness),
+                    new BABYLON.Vector2(-halfLength, halfThickness)
                 ];
             default:
                 throw new Error(`Unsupported opening type: ${this.type}`);

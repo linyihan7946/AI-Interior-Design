@@ -1,6 +1,6 @@
 <!--
  * @Author: LinYiHan
- * @Date: 2025-03-12 06:59:31
+ * @Date: 2025-02-26 11:53:54
  * @Description: 
  * @Version: 1.0
 -->
@@ -31,18 +31,15 @@ export default defineComponent({
 
     onMounted(() => {
         if (canvas3D.value && canvas2D.value) {
-            if (canvas3D.value && canvas3D.value.canvasRef && canvas2D.value && canvas2D.value.canvas2d) {
+            if (canvas3D.value && canvas3D.value.canvas3d && canvas2D.value && canvas2D.value.canvas2dCanvas) {
                 Api.init({
-                    view3dId: canvas3D.value.canvasRef.id,
-                    view2dId: canvas2D.value.canvas2d.id
+                    view3dId: canvas3D.value.canvas3d.id,
+                    view2dId: canvas2D.value.canvas2dCanvas.id
                 });
             }
             Api.executeCommand("newFile", {});
+            // Api.executeCommand("createOneWall", {});
             Api.executeCommand("createRectangularRoom", {}); // 只调用创建矩形房间命令
-            // Api.executeCommand("createOneWall", {}); // 先创建一面墙
-            // Api.executeCommand("createSingleDoor", {}); // 再添加一个门
-            // Api.executeCommand("createGround", {}); // 最后创建地面
-
         }
     });
 
@@ -55,25 +52,36 @@ export default defineComponent({
 </script>
 
 <style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
 .canvas-container {
   display: flex;
   width: 100%;
-  height: 100vh;
+  height: 100%;
 }
 
 .canvas-container > * {
   flex: 1;
   height: 100%;
-  width: 50%; /* 明确设置宽度为50% */
+  width: 50%;
 }
 
 .canvas-container > Canvas3D {
-  order: 1; /* 将 Canvas3D 放在左边 */
-  width: 50%; /* 明确设置 Canvas3D 的宽度为50% */
+  order: 1;
 }
 
 .canvas-container > Canvas2D {
-  order: 2; /* 将 Canvas2D 放在右边 */
-  width: 50%; /* 明确设置 Canvas2D 的宽度为50% */
+  order: 2;
 }
 </style>

@@ -4,12 +4,15 @@
  * @Description: 地面物体类
  * @Version: 1.0
  */
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
+
+import { MaterialNameList } from '../bottomClass/MaterialNameList';
 import { ModelingTool } from '../bottomClass/ModelingTool';
 import { XthCompositeLine } from './XthCompositeLine';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { Configure } from '../bottomClass/Configure';
+import { Geometry } from '../bottomClass/Geometry';
 
 export class XthGround extends XthObject {
     // 外圈，不用序列化
@@ -27,10 +30,10 @@ export class XthGround extends XthObject {
 
         // 如果没有传入颜色值，则使用 Configure 中的默认值
         if (!json || json.normalMeshColor2 === undefined) {
-            this.normalMeshColor2 = Configure.Instance.groundMeshColor2;
+            ModelingTool.setColor(this.normalMeshColor2, Configure.Instance.groundMeshColor2)
         }
         if (!json || json.normalMeshColor3 === undefined) {
-            this.normalMeshColor3 = Configure.Instance.groundMeshColor3;
+            ModelingTool.setColor(this.normalMeshColor3, Configure.Instance.groundMeshColor3)
         }
 
         // 确保构造函数的名字不会被改变
@@ -87,34 +90,41 @@ export class XthGround extends XthObject {
     /**
      * 构建二维图形
      */
-    public build2d(): void {
+    build2d(scene2: BABYLON.Scene | undefined): void {
+        if (!scene2) {
+            console.warn('Scene is undefined in build2d');
+            return;
+        }
+
         const selfObject2 = this.getSelfObject2();
         ModelingTool.removeObject3D(selfObject2);
 
         // 获取外圈和内孔的点集
         const outlinePoints3D = this._outline.getDividedPoints(10);
-        const outlinePoints = outlinePoints3D.map(point => new THREE.Vector2(point.x, point.y));
         const holesPoints3D = this._holes.map(hole => hole.getDividedPoints(10));
-        const holesPoints = holesPoints3D.map(holePoints => holePoints.map(point => new THREE.Vector2(point.x, point.y)));
-
+       
         // 使用配置中的地面贴图
-        const texture = new THREE.TextureLoader().load(Configure.Instance.groundTexturePath);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+        const texture = new BABYLON.Texture(Configure.Instance.groundTexturePath, scene2);
+        const material = new BABYLON.StandardMaterial(MaterialNameList.GROUND_MATERIAL, scene2);
+        material.diffuseTexture = texture;
+        material.emissiveTexture = texture;
+        material.disableLighting = true;
+        material.backFaceCulling = false;
 
         // 创建二维图形
-        const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
-        ModelingTool.setAutoUV(shapeGeometry, 800, 800);
-        const mesh = new THREE.Mesh(shapeGeometry, material);
-
-        selfObject2.add(mesh);
+        const mesh = ModelingTool.CreateShapeGeometry([outlinePoints3D, ...holesPoints3D], scene2);
+        mesh.material = material;
+        mesh.parent = selfObject2;
     }
 
     /**
      * 构建三维图形
      */
-    public build3d(): void {
+    build3d(scene3: BABYLON.Scene | undefined): void {
+        if (!scene3) {
+            console.warn('Scene is undefined in build3d');
+            return;
+        }
         const selfObject3 = this.getSelfObject3();
         ModelingTool.removeObject3D(selfObject3);
 
@@ -123,16 +133,16 @@ export class XthGround extends XthObject {
         const holesPoints = this._holes.map(hole => hole.getDividedPoints(10));
 
         // 使用配置中的地面贴图
-        const texture = new THREE.TextureLoader().load(Configure.Instance.groundTexturePath);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        const material = new THREE.MeshBasicMaterial({ map: texture });
+        const texture = new BABYLON.Texture(Configure.Instance.groundTexturePath, scene3);
+        const material = new BABYLON.StandardMaterial(MaterialNameList.GROUND_MATERIAL, scene3);
+        material.diffuseTexture = texture;
+        material.emissiveTexture = texture;
+        material.disableLighting = true;
+        material.backFaceCulling = false;
 
         // 创建三维图形
-        const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
-        ModelingTool.setAutoUV(shapeGeometry, 800, 800);
-        const mesh = new THREE.Mesh(shapeGeometry, material);
-
-        selfObject3.add(mesh);
+        const mesh = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints], scene3);
+        mesh.material = material;
+        mesh.parent = selfObject3;
     }
 }

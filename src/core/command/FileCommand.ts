@@ -63,12 +63,6 @@ export class NewFileCommand extends CommandBase {
     public executeCommand(): void {
         this.sceneManager.newFile();
         const scene = this.sceneManager.getScene();
-        if (scene?.object3) {
-            Api.getApp().view3d?.addObject(scene.object3);
-        }
-        if (scene?.object2) {
-            Api.getApp().view2d?.addObject(scene.object2);
-        }
     }
 }
 

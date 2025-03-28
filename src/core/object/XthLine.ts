@@ -4,17 +4,18 @@
  * @Description: 线段类，可以是直线、圆弧或贝塞尔曲线
  * @Version: 1.0
  */
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { ModelingTool } from '../bottomClass/ModelingTool';
+import { MaterialNameList } from '../bottomClass/MaterialNameList';
 
 export class XthLine extends XthObject {
     @JsonProperty()
-    startPt: THREE.Vector3 = new THREE.Vector3(); // 起点
+    startPt: BABYLON.Vector3 = new BABYLON.Vector3(); // 起点
 
     @JsonProperty()
-    endPt: THREE.Vector3 = new THREE.Vector3(); // 终点
+    endPt: BABYLON.Vector3 = new BABYLON.Vector3(); // 终点
 
     @JsonProperty()
     radius: number = 0; // 圆弧半径
@@ -30,6 +31,7 @@ export class XthLine extends XthObject {
             writable: false,
             configurable: true
         });
+        this.fromJSON(json);
     }
 
     /**
@@ -37,8 +39,8 @@ export class XthLine extends XthObject {
      * @param segments 分段数
      * @returns 返回等分点集
      */
-    public getDividedPoints(segments: number): THREE.Vector3[] {
-        const points: THREE.Vector3[] = [];
+    public getDividedPoints(segments: number): BABYLON.Vector3[] {
+        const points: BABYLON.Vector3[] = [];
         if (this.isArc && this.radius > 0) {
             // 计算圆弧的等分点
             const center = this.calculateArcCenter();
@@ -49,15 +51,17 @@ export class XthLine extends XthObject {
                 const angle = startAngle + angleStep * i;
                 const x = center.x + this.radius * Math.cos(angle);
                 const y = center.y + this.radius * Math.sin(angle);
-                points.push(new THREE.Vector3(x, y, this.startPt.z));
+                points.push(new BABYLON.Vector3(x, y, this.startPt.z));
             }
         } else {
+            points.push(this.startPt);
+            points.push(this.endPt);
             // 直线段的等分点
-            for (let i = 0; i <= segments; i++) {
-                const t = i / segments;
-                const point = new THREE.Vector3().lerpVectors(this.startPt, this.endPt, t);
-                points.push(point);
-            }
+            // for (let i = 0; i <= segments; i++) {
+            //     const t = i / segments;
+            //     const point = BABYLON.Vector3.Lerp(this.startPt, this.endPt, t);
+            //     points.push(point);
+            // }
         }
         return points;
     }
@@ -66,13 +70,13 @@ export class XthLine extends XthObject {
      * 计算圆弧的中心点
      * @returns 圆弧的中心点
      */
-    private calculateArcCenter(): THREE.Vector3 {
-        const midPoint = new THREE.Vector3().addVectors(this.startPt, this.endPt).multiplyScalar(0.5);
-        const chordLength = this.startPt.distanceTo(this.endPt);
+    private calculateArcCenter(): BABYLON.Vector3 {
+        const midPoint = this.startPt.add(this.endPt).multiplyByFloats(0.5, 0.5, 0.5);
+        const chordLength = this.startPt.subtract(this.endPt).length();
         const height = Math.sqrt(Math.pow(this.radius, 2) - Math.pow(chordLength / 2, 2));
-        const direction = new THREE.Vector3().subVectors(this.endPt, this.startPt).normalize();
-        const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
-        return midPoint.clone().add(perpendicular.multiplyScalar(height));
+        const direction = this.endPt.subtract(this.startPt).normalize();
+        const perpendicular = new BABYLON.Vector3(-direction.y, direction.x, 0).normalize();
+        return midPoint.clone().add(perpendicular.multiplyByFloats(height, height, height));
     }
 
     /**
@@ -80,8 +84,8 @@ export class XthLine extends XthObject {
      * @param center 圆弧的中心点
      * @returns 起始角度
      */
-    private calculateArcStartAngle(center: THREE.Vector3): number {
-        const startVector = new THREE.Vector3().subVectors(this.startPt, center);
+    private calculateArcStartAngle(center: BABYLON.Vector3): number {
+        const startVector = this.startPt.subtract(center);
         return Math.atan2(startVector.y, startVector.x);
     }
 
@@ -90,38 +94,33 @@ export class XthLine extends XthObject {
      * @param center 圆弧的中心点
      * @returns 结束角度
      */
-    private calculateArcEndAngle(center: THREE.Vector3): number {
-        const endVector = new THREE.Vector3().subVectors(this.endPt, center);
+    private calculateArcEndAngle(center: BABYLON.Vector3): number {
+        const endVector = this.endPt.subtract(center);
         return Math.atan2(endVector.y, endVector.x);
     }
 
-    /**
-     * 构建二维图形
-     */
-    public build2d(): void {
+    public build2d(scene2: BABYLON.Scene | undefined): void {
         const selfObject2 = this.getSelfObject2();
         ModelingTool.removeObject3D(selfObject2);
 
         const points = this.getDividedPoints(10); // 默认分为10段
-        const material = new THREE.LineBasicMaterial({ color: this.getNormalLineColor2() });
-
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, material);
-        selfObject2.add(line);
+        const material = new BABYLON.StandardMaterial(MaterialNameList.LINE_MATERIAL, scene2);
+        material.diffuseColor = this.getNormalLineColor2();
+        const line = BABYLON.MeshBuilder.CreateLines("lines", { points, updatable: true });
+        line.material = material;
+        line.parent = selfObject2;
     }
 
-    /**
-     * 构建三维图形
-     */
-    public build3d(): void {
+    public build3d(scene3: BABYLON.Scene | undefined): void {
         const selfObject3 = this.getSelfObject3();
         ModelingTool.removeObject3D(selfObject3);
 
         const points = this.getDividedPoints(10); // 默认分为10段
-        const material = new THREE.LineBasicMaterial({ color: this.getNormalLineColor3() });
+        const material = new BABYLON.StandardMaterial(MaterialNameList.LINE_MATERIAL, scene3);
+        material.diffuseColor = this.getNormalLineColor3();
 
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, material);
-        selfObject3.add(line);
+        const line = BABYLON.MeshBuilder.CreateLines("lines", { points, updatable: true });
+        line.material = material;
+        line.parent = selfObject3;
     }
 }

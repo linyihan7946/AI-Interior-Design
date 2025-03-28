@@ -1,18 +1,19 @@
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
 
 export class Renderer {
-  private scene: THREE.Scene;
-  private camera: THREE.PerspectiveCamera;
-  private renderer: THREE.WebGLRenderer;
+  private scene: BABYLON.Scene;
+  private camera: BABYLON.Camera;
+  private engine: BABYLON.Engine;
 
-  constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement) {
+  constructor(scene: BABYLON.Scene, camera: BABYLON.Camera, canvas: HTMLCanvasElement) {
     this.scene = scene;
     this.camera = camera;
-    this.renderer = new THREE.WebGLRenderer({ canvas });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.engine = new BABYLON.Engine(canvas, true);
   }
 
   public render(): void {
-    this.renderer.render(this.scene, this.camera);
+    this.engine.runRenderLoop(() => {
+      this.scene.render();
+    });
   }
 }

@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
 
 export class Geometry {
     /**
@@ -8,8 +8,8 @@ export class Geometry {
      * @returns 共线、平行、相交、不平行也不相交
      */
     public static lineIntersectionType(
-        line1: { start: THREE.Vector2; end: THREE.Vector2 },
-        line2: { start: THREE.Vector2; end: THREE.Vector2 }
+        line1: { start: BABYLON.Vector2; end: BABYLON.Vector2 },
+        line2: { start: BABYLON.Vector2; end: BABYLON.Vector2 }
     ): 'collinear' | 'parallel' | 'intersect' | 'none' {
         const a1 = line1.end.y - line1.start.y;
         const b1 = line1.start.x - line1.end.x;
@@ -27,7 +27,7 @@ export class Geometry {
         } else {
             const x = (b2 * c1 - b1 * c2) / denominator;
             const y = (a1 * c2 - a2 * c1) / denominator;
-            const intersectPoint = new THREE.Vector2(x, y);
+            const intersectPoint = new BABYLON.Vector2(x, y);
 
             if (this.isPointOnLineSegment(intersectPoint, line1) && this.isPointOnLineSegment(intersectPoint, line2)) {
                 return 'intersect';
@@ -45,12 +45,16 @@ export class Geometry {
      * @returns 点到平面的距离
      */
     public static pointToPlaneDistance(
-        point: THREE.Vector3,
-        planePoint: THREE.Vector3,
-        planeNormal: THREE.Vector3
+        point: BABYLON.Vector3,
+        planePoint: BABYLON.Vector3,
+        planeNormal: BABYLON.Vector3
     ): number {
-        const v = point.clone().sub(planePoint);
+        const v = point.subtract(planePoint);
         return Math.abs(v.dot(planeNormal.normalize()));
+    }
+
+    public static cross(a: BABYLON.Vector2, b: BABYLON.Vector2): number {
+        return a.x * b.y - a.y * b.x;
     }
 
     /**
@@ -61,11 +65,11 @@ export class Geometry {
      * @returns 是否平行
      */
     public static areLinesParallel(
-        line1: THREE.Vector2,
-        line2: THREE.Vector2,
+        line1: BABYLON.Vector2,
+        line2: BABYLON.Vector2,
         epsilon: number = 1e-6
     ): boolean {
-        const crossProduct = Math.abs(line1.cross(line2));
+        const crossProduct = Math.abs(this.cross(line1, line2));
         return crossProduct < epsilon;
     }
 
@@ -74,7 +78,7 @@ export class Geometry {
      * @param points 点集
      * @returns 是否逆时针
      */
-    public static isCounterClockwise(points: THREE.Vector2[]): boolean {
+    public static isCounterClockwise(points: BABYLON.Vector2[]): boolean {
         let sum = 0;
         for (let i = 0; i < points.length; i++) {
             const p1 = points[i];
@@ -92,11 +96,11 @@ export class Geometry {
      * @returns 偏移后的点集
      */
     public static offsetPoints(
-        points: THREE.Vector2[],
+        points: BABYLON.Vector2[],
         offset: number,
         isClosed: boolean = true
-    ): THREE.Vector2[] {
-        const offsetPoints: THREE.Vector2[] = [];
+    ): BABYLON.Vector2[] {
+        const offsetPoints: BABYLON.Vector2[] = [];
         const length = points.length;
 
         for (let i = 0; i < length; i++) {
@@ -104,14 +108,14 @@ export class Geometry {
             const curr = points[i];
             const next = points[(i + 1) % length];
 
-            const vPrev = curr.clone().sub(prev).normalize();
-            const vNext = next.clone().sub(curr).normalize();
+            const vPrev = curr.subtract(prev).normalize();
+            const vNext = next.subtract(curr).normalize();
 
             const angle = Math.atan2(vNext.y - vPrev.y, vNext.x - vPrev.x);
             const offsetX = offset * Math.cos(angle);
             const offsetY = offset * Math.sin(angle);
 
-            offsetPoints.push(new THREE.Vector2(curr.x + offsetX, curr.y + offsetY));
+            offsetPoints.push(new BABYLON.Vector2(curr.x + offsetX, curr.y + offsetY));
         }
 
         if (!isClosed) {
@@ -129,8 +133,8 @@ export class Geometry {
      * @returns 是否在线段上
      */
     private static isPointOnLineSegment(
-        point: THREE.Vector2,
-        line: { start: THREE.Vector2; end: THREE.Vector2 }
+        point: BABYLON.Vector2,
+        line: { start: BABYLON.Vector2; end: BABYLON.Vector2 }
     ): boolean {
         const minX = Math.min(line.start.x, line.end.x);
         const maxX = Math.max(line.start.x, line.end.x);
@@ -151,11 +155,11 @@ export class Geometry {
      * @returns 偏移后的复合线段
      */
     public static offsetCompositeLine(
-        segments: Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }>,
+        segments: Array<{ type: 'line' | 'arc', points: BABYLON.Vector2[], radius?: number, center?: BABYLON.Vector2 }>,
         offsets: number[],
         isClosed: boolean = true
-    ): Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }> {
-        const offsetSegments: Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }> = [];
+    ): Array<{ type: 'line' | 'arc', points: BABYLON.Vector2[], radius?: number, center?: BABYLON.Vector2 }> {
+        const offsetSegments: Array<{ type: 'line' | 'arc', points: BABYLON.Vector2[], radius?: number, center?: BABYLON.Vector2 }> = [];
 
         for (let i = 0; i < segments.length; i++) {
             const segment = segments[i];
@@ -170,7 +174,7 @@ export class Geometry {
                 // 处理圆弧偏移
                 const arcPoints = segment.points;
                 const radius = segment.radius || 0;
-                const center = segment.center || new THREE.Vector2();
+                const center = segment.center || new BABYLON.Vector2();
                 const offsetArcPoints = this.offsetArc(arcPoints, radius, center, offset);
                 offsetSegments.push({ type: 'arc', points: offsetArcPoints, radius: radius + offset, center });
             }
@@ -197,7 +201,7 @@ export class Geometry {
         }
 
         // 合并相邻的线段以减少线段数目
-        const mergedSegments: Array<{ type: 'line' | 'arc', points: THREE.Vector2[], radius?: number, center?: THREE.Vector2 }> = [];
+        const mergedSegments: Array<{ type: 'line' | 'arc', points: BABYLON.Vector2[], radius?: number, center?: BABYLON.Vector2 }> = [];
         let currentSegment = offsetSegments[0];
 
         for (let i = 1; i < offsetSegments.length; i++) {
@@ -223,8 +227,8 @@ export class Geometry {
      * @param offset 偏移量
      * @returns 偏移后的点集
      */
-    private static offsetLine(points: THREE.Vector2[], offset: number): THREE.Vector2[] {
-        const offsetPoints: THREE.Vector2[] = [];
+    private static offsetLine(points: BABYLON.Vector2[], offset: number): BABYLON.Vector2[] {
+        const offsetPoints: BABYLON.Vector2[] = [];
         const length = points.length;
 
         for (let i = 0; i < length; i++) {
@@ -232,14 +236,14 @@ export class Geometry {
             const curr = points[i];
             const next = points[(i + 1) % length];
 
-            const vPrev = curr.clone().sub(prev).normalize();
-            const vNext = next.clone().sub(curr).normalize();
+            const vPrev = curr.subtract(prev).normalize();
+            const vNext = next.subtract(curr).normalize();
 
             const angle = Math.atan2(vNext.y - vPrev.y, vNext.x - vPrev.x);
             const offsetX = offset * Math.cos(angle);
             const offsetY = offset * Math.sin(angle);
 
-            offsetPoints.push(new THREE.Vector2(curr.x + offsetX, curr.y + offsetY));
+            offsetPoints.push(new BABYLON.Vector2(curr.x + offsetX, curr.y + offsetY));
         }
 
         return offsetPoints;
@@ -253,13 +257,13 @@ export class Geometry {
      * @param offset 偏移量
      * @returns 偏移后的点集
      */
-    private static offsetArc(points: THREE.Vector2[], radius: number, center: THREE.Vector2, offset: number): THREE.Vector2[] {
-        const offsetPoints: THREE.Vector2[] = [];
+    private static offsetArc(points: BABYLON.Vector2[], radius: number, center: BABYLON.Vector2, offset: number): BABYLON.Vector2[] {
+        const offsetPoints: BABYLON.Vector2[] = [];
         const newRadius = radius + offset;
 
         for (const point of points) {
-            const direction = point.clone().sub(center).normalize();
-            const offsetPoint = center.clone().add(direction.multiplyScalar(newRadius));
+            const direction = point.subtract(center).normalize();
+            const offsetPoint = center.clone().add(direction.multiplyByFloats(newRadius, newRadius));
             offsetPoints.push(offsetPoint);
         }
 
@@ -273,12 +277,47 @@ export class Geometry {
      * @returns 投影点
      */
     public static projectPointToLine(
-        point: THREE.Vector3,
-        line: { start: THREE.Vector3; end: THREE.Vector3 }
-    ): THREE.Vector3 {
-        const lineDirection = new THREE.Vector3().subVectors(line.end, line.start).normalize();
-        const pointToStart = new THREE.Vector3().subVectors(point, line.start);
+        point: BABYLON.Vector3,
+        line: { start: BABYLON.Vector3; end: BABYLON.Vector3 }
+    ): BABYLON.Vector3 {
+        const lineDirection = line.end.subtract(line.start).normalize();
+        const pointToStart = point.subtract(line.start);
         const projectionLength = pointToStart.dot(lineDirection);
-        return new THREE.Vector3().copy(line.start).addScaledVector(lineDirection, projectionLength);
+        return line.start.add(lineDirection.multiplyByFloats(projectionLength, projectionLength, projectionLength));
+    }
+
+    /**
+     * 计算点集的包络框
+     * @param points 三维点集
+     * @returns 包络框的边界点（最小点和最大点）
+     */
+    public static calculateBoundingBox(points: BABYLON.Vector3[]): { min: BABYLON.Vector3; max: BABYLON.Vector3 } {
+        if (!points || points.length === 0) {
+            return { min: BABYLON.Vector3.Zero(), max: BABYLON.Vector3.Zero() };
+        }
+
+        // 初始化最小点和最大点
+        let minX = points[0].x;
+        let minY = points[0].y;
+        let minZ = points[0].z;
+        let maxX = points[0].x;
+        let maxY = points[0].y;
+        let maxZ = points[0].z;
+
+        // 遍历所有点，更新边界值
+        for (let i = 1; i < points.length; i++) {
+            const point = points[i];
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            minZ = Math.min(minZ, point.z);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+            maxZ = Math.max(maxZ, point.z);
+        }
+
+        return {
+            min: new BABYLON.Vector3(minX, minY, minZ),
+            max: new BABYLON.Vector3(maxX, maxY, maxZ)
+        };
     }
 }

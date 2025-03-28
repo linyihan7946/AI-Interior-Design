@@ -1,21 +1,21 @@
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
 import { XthTree } from './XthTree';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { ModelingTool } from '../bottomClass/ModelingTool';
 
 export class XthObject extends XthTree {
     @JsonProperty()
-    uuid: string = THREE.MathUtils.generateUUID();
+    uuid: string = BABYLON.Tools.RandomId();
     @JsonProperty()
     name: string = '';
     @JsonProperty()
-    matrix2: THREE.Matrix4 = new THREE.Matrix4();
+    matrix2 = BABYLON.Matrix.Identity();
     @JsonProperty()
-    matrixWorld2: THREE.Matrix4 = new THREE.Matrix4();
+    matrixWorld2 = BABYLON.Matrix.Identity();
     @JsonProperty()
-    matrix3: THREE.Matrix4 = new THREE.Matrix4();
+    matrix3 = BABYLON.Matrix.Identity();
     @JsonProperty()
-    matrixWorld3: THREE.Matrix4 = new THREE.Matrix4();
+    matrixWorld3 = BABYLON.Matrix.Identity();
     @JsonProperty()
     isVisible2: boolean = true;
     @JsonProperty()
@@ -25,22 +25,22 @@ export class XthObject extends XthTree {
     userData: any = {}; // 添加扩展数据属性
 
     @JsonProperty()
-    normalMeshColor2: number = 0x00ff00; // 二维正常状态mesh的颜色
+    normalMeshColor2: BABYLON.Color3 = new BABYLON.Color3(0, 1, 0); // 二维正常状态mesh的颜色
 
     @JsonProperty()
-    normalLineColor2: number = 0x0000ff; // 二维正常状态line的颜色
+    normalLineColor2: BABYLON.Color3 = new BABYLON.Color3(0, 0, 1); // 二维正常状态line的颜色
 
     @JsonProperty()
-    normalMeshColor3: number = 0x00ff00; // 三维正常状态mesh的颜色
+    normalMeshColor3: BABYLON.Color3 = new BABYLON.Color3(0, 1, 0); // 三维正常状态mesh的颜色
 
     @JsonProperty()
-    normalLineColor3: number = 0x0000ff; // 三维正常状态line的颜色
+    normalLineColor3: BABYLON.Color3 = new BABYLON.Color3(0, 0, 1); // 三维正常状态line的颜色
 
     [key: string]: any;
     @JsonProperty(false) // 控制object2不导出
-    object2: THREE.Object3D = new THREE.Object3D();
+    object2: BABYLON.TransformNode = new BABYLON.TransformNode("object2");
     @JsonProperty(false) // 控制object3不导出
-    object3: THREE.Object3D = new THREE.Object3D();
+    object3: BABYLON.TransformNode = new BABYLON.TransformNode("object3");
 
     constructor(json?: any) {
         super();
@@ -60,12 +60,16 @@ export class XthObject extends XthTree {
             const shouldExport = Reflect.getMetadata('json:export', this, property);
             if (shouldExport) {
                 const value = this[property];
-                if (value instanceof THREE.Matrix4) {
+                if (value instanceof BABYLON.Matrix) {
                     json[property] = value.toArray();
-                } else if (value instanceof THREE.Vector3) {
-                    json[property] = value.toArray();
-                } else if (value instanceof THREE.Vector2) {
-                    json[property] = value.toArray();
+                } else if (value instanceof BABYLON.Vector3) {
+                    const targetArray = new Array(3);
+                    value.toArray(targetArray);
+                    json[property] = targetArray;
+                } else if (value instanceof BABYLON.Vector2) {
+                    const targetArray = new Array(2);
+                    value.toArray(targetArray);
+                    json[property] = targetArray;
                 } else {
                     json[property] = value;
                 }
@@ -83,11 +87,11 @@ export class XthObject extends XthTree {
         properties.forEach(property => {
             if (json[property] !== undefined) {
                 const value = json[property];
-                if (this[property] instanceof THREE.Matrix4) {
+                if (this[property] instanceof BABYLON.Matrix) {
                     this[property].fromArray(value);
-                } else if (this[property] instanceof THREE.Vector3) {
+                } else if (this[property] instanceof BABYLON.Vector3) {
                     this[property].fromArray(value);
-                } else if (this[property] instanceof THREE.Vector2) {
+                } else if (this[property] instanceof BABYLON.Vector2) {
                     this[property].fromArray(value);
                 } else {
                     this[property] = value;
@@ -102,40 +106,43 @@ export class XthObject extends XthTree {
         return cloned;
     }
 
-    
     /**
      * 矩阵变换
      *
-     * @param {THREE.Matrix4} matrix 
+     * @param {BABYLON.Matrix} matrix 
      */
-    applyMatrix4(matrix: THREE.Matrix4): void {
-        this.matrix2.multiplyMatrices(matrix, this.matrix2);
-        this.matrix3.multiplyMatrices(matrix, this.matrix3);
+    applyMatrix4(matrix: BABYLON.Matrix): void {
+        this.matrix2 = this.matrix2.multiply(matrix);
+        this.matrix3 = this.matrix3.multiply(matrix);
         // 更新对象的变换
-        this.object2.applyMatrix4(matrix);
-        this.object3.applyMatrix4(matrix);
+        ModelingTool.applyMatrix4(this.object2, matrix);
+        ModelingTool.applyMatrix4(this.object3, matrix);
     }
 
     remove(): void {
         super.remove();
     }
 
-    build2d(): void {
+    /***/
+    rebuild(scene2: BABYLON.Scene | undefined, scene3: BABYLON.Scene | undefined): void {
+        this.build2d(scene2);
+        this.build3d(scene3);
     }
 
-    build3d(): void {
+    build2d(scene2: BABYLON.Scene | undefined): void {
+        // 默认实现为空
     }
 
-    rebuild(): void {
-        this.build2d();
-        this.build3d();
+    build3d(scene3: BABYLON.Scene | undefined): void {
+        // 默认实现为空
     }
+    /***/
 
     setParent(parent: XthTree): void {
         super.setParent(parent);
         if (parent instanceof XthObject) {
-            parent.object2.add(this.object2);
-            parent.object3.add(this.object3);
+            this.object2.parent = parent.object2;
+            this.object3.parent = parent.object3;
         }
     }
 
@@ -184,7 +191,7 @@ export class XthObject extends XthTree {
      * 获取二维正常状态mesh的颜色
      * @returns 颜色值
      */
-    public getNormalMeshColor2(): number {
+    public getNormalMeshColor2(): BABYLON.Color3 {
         return this.normalMeshColor2;
     }
 
@@ -192,39 +199,39 @@ export class XthObject extends XthTree {
      * 设置二维正常状态mesh的颜色
      * @param color 颜色值
      */
-    public setNormalMeshColor2(color: number): void {
+    public setNormalMeshColor2(color: BABYLON.Color3): void {
         this.normalMeshColor2 = color;
     }
 
     /**
      * 获取二维正常状态line的颜色
-     * @returns 颜色值
+     * @returns 颜色값
      */
-    public getNormalLineColor2(): number {
+    public getNormalLineColor2(): BABYLON.Color3 {
         return this.normalLineColor2;
     }
 
     /**
      * 设置二维正常状态line的颜色
-     * @param color 颜色值
+     * @param color 颜色값
      */
-    public setNormalLineColor2(color: number): void {
+    public setNormalLineColor2(color: BABYLON.Color3): void {
         this.normalLineColor2 = color;
     }
 
     /**
      * 获取三维正常状态mesh的颜色
-     * @returns 颜色值
+     * @returns 颜色값
      */
-    public getNormalMeshColor3(): number {
+    public getNormalMeshColor3(): BABYLON.Color3 {
         return this.normalMeshColor3;
     }
 
     /**
      * 设置三维正常状态mesh的颜色
-     * @param color 颜色值
+     * @param color 颜色값
      */
-    public setNormalMeshColor3(color: number): void {
+    public setNormalMeshColor3(color: BABYLON.Color3): void {
         this.normalMeshColor3 = color;
     }
 
@@ -232,7 +239,7 @@ export class XthObject extends XthTree {
      * 获取三维正常状态line的颜色
      * @returns 颜色값
      */
-    public getNormalLineColor3(): number {
+    public getNormalLineColor3(): BABYLON.Color3 {
         return this.normalLineColor3;
     }
 
@@ -240,26 +247,32 @@ export class XthObject extends XthTree {
      * 设置三维正常状态line的颜色
      * @param color 颜色값
      */
-    public setNormalLineColor3(color: number): void {
+    public setNormalLineColor3(color: BABYLON.Color3): void {
         this.normalLineColor3 = color;
     }
 
-    getSelfObject2(): THREE.Object3D {
-        let selfObject2 = this.object2.children.find((child: any) => child.userData.isSelfObject === true);
+    getSelfObject2(): BABYLON.AbstractMesh {
+        let selfObject2 = this.object2.getChildMeshes().find(child => (child.metadata && child.metadata.isSelfObject === true));
         if (!selfObject2) {
-            selfObject2 = new THREE.Object3D();
-            selfObject2.userData.isSelfObject = true;
-            this.object2.add(selfObject2);
+            selfObject2 = new BABYLON.Mesh("selfObject2");
+            if (!selfObject2.metadata) {
+                selfObject2.metadata = {};
+            }
+            selfObject2.metadata.isSelfObject = true;
+            selfObject2.parent = this.object2;
         }
         return selfObject2;
     }
 
-    getSelfObject3(): THREE.Object3D {
-        let selfObject3 = this.object3.children.find((child: any) => child.userData.isSelfObject === true);
+    getSelfObject3(): BABYLON.AbstractMesh {
+        let selfObject3 = this.object3.getChildMeshes().find(child => (child.metadata && child.metadata.isSelfObject === true));
         if (!selfObject3) {
-            selfObject3 = new THREE.Object3D();
-            selfObject3.userData.isSelfObject = true;
-            this.object3.add(selfObject3);
+            selfObject3 = new BABYLON.Mesh("selfObject3");
+            if (!selfObject3.metadata) {
+                selfObject3.metadata = {};
+            }
+            selfObject3.metadata.isSelfObject = true;
+            selfObject3.parent = this.object3;
         }
         return selfObject3;
     }

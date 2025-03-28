@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+
 import { JsonProperty } from '../bottomClass/Decorator';
 
 export class XthTree {

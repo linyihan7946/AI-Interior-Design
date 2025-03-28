@@ -9,5 +9,7 @@ export class XthScene extends XthObject {
             writable: false,
             configurable: true
         });
+
+        this.fromJSON(json);
     }
 }

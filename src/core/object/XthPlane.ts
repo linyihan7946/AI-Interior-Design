@@ -4,7 +4,7 @@
  * @Description: 
  * @Version: 1.0
  */
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
 import { ModelingTool } from '../bottomClass/ModelingTool';
 import { XthCompositeLine } from './XthCompositeLine';
 import { XthObject } from './XthObject';
@@ -87,11 +87,11 @@ export class XthPlane extends XthObject {
         const holesPoints = this._holes.map(hole => hole.getDividedPoints(10));
 
         // 创建二维图形
-        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor2(), side: THREE.DoubleSide });
-        const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
-        const mesh = new THREE.Mesh(shapeGeometry, material);
-
-        selfObject2.add(mesh);
+        const material = new BABYLON.StandardMaterial("lineMat");
+        material.diffuseColor = this.getNormalMeshColor2();
+        const mesh = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
+        mesh.material = material;
+        mesh.parent = selfObject2;
     }
 
     /**
@@ -106,10 +106,10 @@ export class XthPlane extends XthObject {
         const holesPoints = this._holes.map(hole => hole.getDividedPoints(10));
 
         // 创建三维图形
-        const material = new THREE.MeshBasicMaterial({ color: this.getNormalMeshColor3() });
-        const shapeGeometry = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
-        const mesh = new THREE.Mesh(shapeGeometry, material);
-
-        selfObject3.add(mesh);
+        const material = new BABYLON.StandardMaterial("lineMat");
+        material.diffuseColor = this.getNormalMeshColor3();
+        const mesh = ModelingTool.CreateShapeGeometry([outlinePoints, ...holesPoints]);
+        mesh.material = material;
+        mesh.parent = selfObject3;
     }
 }

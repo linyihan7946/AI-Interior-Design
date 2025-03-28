@@ -4,81 +4,197 @@
  * @Description: 
  * @Version: 1.0
  */
-import * as THREE from 'three';
+import * as BABYLON from 'babylonjs';
+import { TemporaryVariable } from '../bottomClass/TemporaryVariable';
 import { Configure } from '../bottomClass/Configure';
-import { TrackballControls2D } from './trackball/TrackballControls2D';
+import { ModelingTool } from '../bottomClass/ModelingTool';
 
 export class View2d {
     private divId: string;
-    public renderer: THREE.WebGLRenderer;
-    public scene: THREE.Scene;
-    public camera: THREE.OrthographicCamera;
-    private controls: TrackballControls2D; // 添加二维轨迹球控件
+    public engine: BABYLON.Engine;
+    public camera: BABYLON.UniversalCamera;
+    public scene: BABYLON.Scene;
+    private container: HTMLCanvasElement | null;
 
-    /**
-     * 构造函数
-     * @param divId 容器窗口的ID
-     */
     constructor(divId: string) {
         this.divId = divId;
-        const container = document.getElementById(this.divId);
+        this.container = document.getElementById(this.divId) as HTMLCanvasElement | null;
 
-        if (!container) {
+        if (!this.container) {
             throw new Error(`Element with id ${divId} not found`);
         }
 
-        // 初始化渲染器
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(container.clientWidth, container.clientHeight);
-        this.renderer.setClearColor(0xf0f0f0); // 设置背景色为浅灰色
-        container.appendChild(this.renderer.domElement);
+        // 初始化引擎
+        this.engine = new BABYLON.Engine(this.container, true);
 
         // 初始化场景
-        this.scene = new THREE.Scene();
+        this.scene = new BABYLON.Scene(this.engine);
+        TemporaryVariable.scene2d = this.scene;
 
-        // 添加环境光
-        const ambientLight = new THREE.AmbientLight(0xffffff, Configure.Instance.ambientLightIntensity2); // 使用配置的环境光强度
-        this.scene.add(ambientLight);
+        // 设置场景背景色
+        const bgColor = Configure.Instance.backgroundColor2;
+        this.scene.clearColor = new BABYLON.Color4(
+            ((bgColor >> 16) & 0xff) / 255,
+            ((bgColor >> 8) & 0xff) / 255,
+            (bgColor & 0xff) / 255,
+            1
+        );
 
-        // 初始化正交相机
-        const aspect = container.clientWidth / container.clientHeight;
-        const scale = 2000; // 设置缩放比例为 2000
-        this.camera = new THREE.OrthographicCamera(-aspect * scale, aspect * scale, 1 * scale, -1 * scale, 0.0001, 1000000); // 将 near 和 far 分别修改为 0.0001 和 1000000
-        this.camera.position.set(0, 0, 500); // 设置相机位置
-        this.camera.lookAt(0, 0, 0); // 设置相机朝向
-        this.camera.zoom = 1; // 设置相机 zoom 值为 1
+        // 初始化相机
+        this.camera = new BABYLON.UniversalCamera("camera1", new BABYLON.Vector3(0, 0, 900), TemporaryVariable.scene2d);
+        this.camera.setTarget(BABYLON.Vector3.Zero());
+        this.camera.attachControl(this.container, true);
 
-        // 添加网格线
-        const gridSize = 1.0E5; // 网格尺寸改为 1.0E5
-        const gridHelper = new THREE.GridHelper(gridSize, Configure.Instance.gridDivisions2, Configure.Instance.gridLineColor2, Configure.Instance.gridLineColor2);
-        gridHelper.position.set(0, 0, 0);
-        gridHelper.rotation.x = Math.PI / 2; // 沿x轴旋转90度
-        this.scene.add(gridHelper);
+        // 设置正交相机模式
+        this.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
+        this.camera.minZ = -1000;
+        this.camera.maxZ = 10000;
+        this.camera.rotation = new BABYLON.Vector3(0, 0, 0);
+        this.camera.rotation.x = 0;
+        this.camera.rotation.y = 0;
+        this.camera.rotation.z = 0;
+        
+        // 更新相机视图范围
+        this.updateCameraViewRange();
 
-        // 初始化二维轨迹球控件
-        this.controls = new TrackballControls2D(this.camera, this.renderer.domElement);
+        this.addCameraControl();
+
+        // 添加平行光
+        const directionalLight = new BABYLON.DirectionalLight("directionalLight", new BABYLON.Vector3(-1, -1, 1).normalize(), this.scene);
+        directionalLight.diffuse = new BABYLON.Color3(1, 1, 1);
+        directionalLight.intensity = 0.5;
+
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            this.engine.resize();
+            this.updateCameraViewRange();
+        });
+
+        this.engine.runRenderLoop(() => {
+            if (TemporaryVariable.scene2d) {
+                this.camera.update();
+                TemporaryVariable.scene2d.render();
+            }
+        });
     }
 
-    /**
-     * 渲染场景
-     */
+
+    private addCameraControl(): void {
+        // 定义拖拽状态变量
+        let isDragging = false;
+        let startX: number, startY: number;
+        const scene = this.scene;
+        const camera = this.camera;
+
+        camera.inputs.clear(); // 清除所有默认输入
+
+        // 添加事件监听
+        scene.onPointerObservable.add((pointerInfo) => {
+            switch (pointerInfo.type) {
+                case BABYLON.PointerEventTypes.POINTERDOWN:
+                    isDragging = true;
+                    startX = scene.pointerX;
+                    startY = scene.pointerY;
+                    break;
+                case BABYLON.PointerEventTypes.POINTERMOVE:
+                    if (isDragging && camera.orthoRight && camera.orthoLeft && camera.orthoTop && camera.orthoBottom) {
+                        // 计算屏幕坐标差值
+                        const deltaX = scene.pointerX - startX;
+                        const deltaY = scene.pointerY - startY;
+                        
+                        // 计算世界坐标中的位移
+                        const worldDelta = new BABYLON.Vector3(
+                            deltaX * (camera.orthoRight - camera.orthoLeft) / scene.getEngine().getRenderWidth(),
+                            -deltaY * (camera.orthoTop - camera.orthoBottom) / scene.getEngine().getRenderHeight(),
+                            0
+                        );
+                        
+                        // 更新相机位置
+                        camera.position.subtractInPlace(worldDelta);
+                        
+                        // 重置起始点
+                        startX = scene.pointerX;
+                        startY = scene.pointerY;
+                    }
+                    break;
+                case BABYLON.PointerEventTypes.POINTERUP:
+                    isDragging = false;
+                    break;
+            }
+        });
+
+        scene.onPointerObservable.add((pointerInfo) => {
+            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERWHEEL && camera.orthoLeft && camera.orthoRight && camera.orthoTop && camera.orthoBottom) {
+                const event = pointerInfo.event as WheelEvent;
+                const zoomSpeed = 0.1;
+                const delta = (event as any).wheelDelta / 120; // 滚轮方向（向上为正，向下为负）
+                
+                // 获取鼠标在世界空间中的位置
+                const mouseX = scene.pointerX;
+                const mouseY = scene.pointerY;
+                
+                // 将鼠标屏幕坐标转换为世界坐标
+                const worldX = camera.orthoLeft + (mouseX / scene.getEngine().getRenderWidth()) * (camera.orthoRight - camera.orthoLeft);
+                const worldY = camera.orthoTop - (mouseY / scene.getEngine().getRenderHeight()) * (camera.orthoTop - camera.orthoBottom);
+                
+                // 计算缩放因子
+                const zoomFactor = 1 - delta * zoomSpeed;
+                
+                // 计算新的视口范围
+                const newLeft = worldX - (worldX - camera.orthoLeft) * zoomFactor;
+                const newRight = worldX + (camera.orthoRight - worldX) * zoomFactor;
+                const newTop = worldY + (camera.orthoTop - worldY) * zoomFactor;
+                const newBottom = worldY - (worldY - camera.orthoBottom) * zoomFactor;
+                
+                // 更新相机视口范围
+                camera.orthoLeft = newLeft;
+                camera.orthoRight = newRight;
+                camera.orthoTop = newTop;
+                camera.orthoBottom = newBottom;
+                
+                camera.update();
+            }
+        });
+    }
+
+    private updateCameraViewRange(): void {
+        if (!this.container) return;
+
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        const aspect = width / height;
+
+        // 设置基准高度为2000
+        const baseHeight = 2000;
+        const baseWidth = baseHeight * aspect;
+
+        // 设置正交相机范围
+        this.camera.orthoLeft = -baseWidth;
+        this.camera.orthoRight = baseWidth;
+        this.camera.orthoTop = baseHeight;
+        this.camera.orthoBottom = -baseHeight;
+        this.camera.update();
+    }
+
     public render(): void {
-        this.renderer.render(this.scene, this.camera);
+        // this.renderer.render(this.scene, this.camera);
     }
 
     /**
      * 添加物体到场景中
      * @param object 要添加的物体
      */
-    public addObject(object: THREE.Object3D): void {
-        this.scene.add(object);
+    public addObject(object: BABYLON.Mesh): void {
+        // if (TemporaryVariable.scene2d) {
+        //     object.parent = TemporaryVariable.scene2d;
+        // }
     }
 
     /**
      * 从场景中移除物体
      * @param object 要移除的物体
      */
-    public removeObject(object: THREE.Object3D): void {
-        this.scene.remove(object);
+    public removeObject(object: BABYLON.Mesh): void {
+        // this.scene.remove(object);
     }
 }

@@ -1,11 +1,15 @@
-import * as THREE from 'three';
+/*
+ * @Author: LinYiHan
+ * @Date: 2025-03-05 18:07:57
+ * @Description: 
+ * @Version: 1.0
+ */
+import * as BABYLON from 'babylonjs';
 
 export class TextureManager {
-    private loader: THREE.TextureLoader;
-    private textureList: THREE.Texture[];
+    private textureList: BABYLON.Texture[];
 
     constructor() {
-        this.loader = new THREE.TextureLoader();
         this.textureList = [];
     }
 
@@ -19,11 +23,11 @@ export class TextureManager {
      */
     public load(
         url: string,
-        onLoad?: (texture: THREE.Texture) => void,
+        onLoad?: (texture: BABYLON.Texture) => void,
         onProgress?: (event: ProgressEvent) => void,
         onError?: (event: any) => void
-    ): THREE.Texture {
-        const texture = this.loader.load(url, onLoad, onProgress, onError);
+    ): BABYLON.Texture {
+        const texture = new BABYLON.Texture(url);
         this.textureList.push(texture);
         return texture;
     }

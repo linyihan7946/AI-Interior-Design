@@ -5,7 +5,7 @@
  * @Version: 1.0
  */
 import { BaseClass } from './BaseClass';
-import { OpeningType } from '../object/XthOpening';
+import { OpeningType } from '../enum/OpeningType';
 
 export class Configure extends BaseClass {
     private static _instance: Configure = new Configure();
@@ -56,6 +56,10 @@ export class Configure extends BaseClass {
 
     // 添加地面贴图路径配置
     public groundTexturePath: string = 'https://tx-wsai-cdn.yfway.com/168s/images/407e31f59b7bd04c572863138fe7f9ea.jpg?imageMogr2/thumbnail/260x260';
+
+    // 添加背景颜色配置
+    public backgroundColor2: number = 0x050505; // 二维场景背景颜色 - 更浅的灰色
+    public backgroundColor3: number = 0xe0e0e0; // 三维场景背景颜色 - 稍深的灰色
 
     // 私有构造函数，防止外部实例化
     private constructor(json?: any) {
