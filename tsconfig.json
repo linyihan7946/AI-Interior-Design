@@ -16,7 +16,8 @@
     "types": [
       "webpack-env",
       "three",
-      "node"
+      "node",
+      "@babylonjs/core"
     ],
     "paths": {
       "@/*": [

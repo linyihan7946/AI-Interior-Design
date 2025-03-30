@@ -4,7 +4,7 @@
  * @Description: 复合线类，由多段线段组合而成
  * @Version: 1.0
  */
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { XthLine } from './XthLine';

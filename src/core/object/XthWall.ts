@@ -4,7 +4,7 @@
  * @Description: 
  * @Version: 1.0
  */
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { JsonProperty } from "../bottomClass/Decorator";
 import { XthObject } from "./XthObject";
 import { ModelingTool } from '../bottomClass/ModelingTool';
@@ -79,7 +79,7 @@ export class XthWall extends XthObject {
         material.emissiveColor = this.getNormalMeshColor2();
         material.disableLighting = true;
         material.backFaceCulling = false;
-        const planeShape = ModelingTool.createPlaneShape(points, scene2);
+        const planeShape = ModelingTool.CreateShapeGeometry([points], scene2);
         planeShape.material = material;
 
         // 构造变换矩阵

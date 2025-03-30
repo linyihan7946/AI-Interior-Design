@@ -4,7 +4,7 @@
  * @Description: 
  * @Version: 1.0
  */
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { ModelingTool } from '../bottomClass/ModelingTool';
 import { XthCompositeLine } from './XthCompositeLine';
 import { XthObject } from './XthObject';

@@ -1,5 +1,5 @@
 import { MaterialNameList } from '../bottomClass/MaterialNameList';
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 
 export class MaterialManager {
     private materialList: BABYLON.Material[] = [];

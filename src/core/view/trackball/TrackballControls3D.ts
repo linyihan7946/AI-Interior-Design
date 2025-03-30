@@ -5,7 +5,7 @@
  * @Version: 1.0
  */
 
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 
 /**
  * 三维轨迹球控制类，继承自THREE.OrbitControls

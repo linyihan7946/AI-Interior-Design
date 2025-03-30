@@ -1,4 +1,4 @@
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { XthTree } from './XthTree';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { ModelingTool } from '../bottomClass/ModelingTool';

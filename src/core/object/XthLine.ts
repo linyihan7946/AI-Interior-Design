@@ -4,7 +4,7 @@
  * @Description: 线段类，可以是直线、圆弧或贝塞尔曲线
  * @Version: 1.0
  */
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { XthObject } from './XthObject';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { ModelingTool } from '../bottomClass/ModelingTool';

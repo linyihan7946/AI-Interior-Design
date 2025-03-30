@@ -4,7 +4,7 @@
  * @Description: 地面物体类
  * @Version: 1.0
  */
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 
 import { MaterialNameList } from '../bottomClass/MaterialNameList';
 import { ModelingTool } from '../bottomClass/ModelingTool';
@@ -112,9 +112,11 @@ export class XthGround extends XthObject {
         material.backFaceCulling = false;
 
         // 创建二维图形
-        const mesh = ModelingTool.CreateShapeGeometry([outlinePoints3D, ...holesPoints3D], scene2);
+        material.diffuseColor = this.getNormalMeshColor2();
+        const mesh = ModelingTool.CreateShapeGeometry([outlinePoints3D, ...holesPoints3D]);
         mesh.material = material;
         mesh.parent = selfObject2;
+
     }
 
     /**

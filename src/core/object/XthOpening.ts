@@ -10,8 +10,9 @@ import { ModelingTool } from '../bottomClass/ModelingTool';
 import { Configure } from '../bottomClass/Configure';
 import { XthWall } from './XthWall';
 import { Geometry } from '../bottomClass/Geometry';
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { OpeningType } from '../enum/OpeningType';
+import { TemporaryVariable } from '../bottomClass/TemporaryVariable';
 
 export class XthOpening extends XthObject {
     @JsonProperty()
@@ -37,6 +38,7 @@ export class XthOpening extends XthObject {
             writable: false,
             configurable: true
         });
+        this.fromJSON(json);
     }
 
     build2d(scene2?: BABYLON.Scene): void {
@@ -48,7 +50,7 @@ export class XthOpening extends XthObject {
         material.diffuseColor = this.getNormalMeshColor2();
         material.emissiveColor = this.getNormalMeshColor2();
         material.disableLighting = true;
-        const planeShape = ModelingTool.createPlaneShape(points, scene2);
+        const planeShape = ModelingTool.CreateShapeGeometry([points], scene2);
         const matrix = BABYLON.Matrix.Translation(0, 0, 10);
         ModelingTool.applyMatrix4(planeShape, matrix);
         planeShape.material = material;
@@ -56,16 +58,26 @@ export class XthOpening extends XthObject {
     }
 
     build3d(scene3?: BABYLON.Scene): void {
+        if (!TemporaryVariable.scene3d) {
+            return;
+        }
         const selfObject3 = this.getSelfObject3();
         ModelingTool.removeObject3D(selfObject3);
 
         const gltfPath = Configure.Instance.gltfPaths[this.type];
         if (gltfPath) {
-            ModelingTool.loadGLTF(gltfPath).then((model) => {
+            ModelingTool.loadGLTF(gltfPath, TemporaryVariable.scene3d).then((model) => {
+                if (!model) {
+                    return;
+                }
                 // 获取模型的边界框
-                const boundingInfo = model.getBoundingInfo();
-                const boundingBox = boundingInfo.boundingBox;
-                const size = boundingBox.maximum.subtract(boundingBox.minimum);
+                
+                const boundingInfo = ModelingTool.getHierarchyBoundingBox(model);
+                if (!boundingInfo) {
+                    return;
+                }
+
+                const size = boundingInfo.maximum.subtract(boundingInfo.minimum);
 
                 // 根据模型的默认尺寸和门窗的实际尺寸计算缩放比例
                 const scale = new BABYLON.Vector3(

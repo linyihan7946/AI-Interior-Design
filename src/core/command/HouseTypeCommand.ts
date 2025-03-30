@@ -4,7 +4,7 @@
  * @Description: 
  * @Version: 1.0
  */
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { CommandBase } from './CommandBase';
 import { Command } from './CommandRegistry';
 import { Api } from '../Api';
@@ -182,19 +182,19 @@ export class CreateRectangularRoomCommand extends CommandBase {
         ground.setOutline(outline);
         scene.addChild(ground);
 
-        // // 在左边的墙上中间位置添加一个单开门
-        // const door = new XthOpening();
-        // door.type = OpeningType.SingleDoor;
-        // door.length = 900;
-        // door.height = 2100;
-        // door.thickness = 200;
-        // door.elevation = 0;
+        // 在左边的墙上中间位置添加一个单开门
+        const door = new XthOpening();
+        door.type = OpeningType.SingleDoor;
+        door.length = 900;
+        door.height = 2100;
+        door.thickness = 200;
+        door.elevation = 0;
 
-        // const wallCenter = leftWall.startPoint.add(leftWall.endPoint).multiplyByFloats(0.5, 0.5, 0.5);
-        // const matrix = BABYLON.Matrix.Translation(wallCenter.x, wallCenter.y, wallCenter.z);
-        // leftWall.addChild(door);
-        // door.applyMatrix4(matrix);
-        // door.dockToWall(leftWall);
+        const wallCenter = leftWall.startPoint.add(leftWall.endPoint).multiplyByFloats(0.5, 0.5, 0.5);
+        const matrix = BABYLON.Matrix.Translation(wallCenter.x, wallCenter.y, wallCenter.z);
+        leftWall.addChild(door);
+        door.applyMatrix4(matrix);
+        door.dockToWall(leftWall);
         
 
         // 重建所有对象
@@ -203,7 +203,7 @@ export class CreateRectangularRoomCommand extends CommandBase {
         topWall.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
         bottomWall.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
         ground.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
-        // door.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
+        door.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
 
         console.log('Rectangular room created with a single door on the left wall');
     }

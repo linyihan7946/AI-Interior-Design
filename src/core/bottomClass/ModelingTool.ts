@@ -1,20 +1,10 @@
 import { Configure } from './Configure';
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import earcut from 'earcut';
 import { TemporaryVariable } from './TemporaryVariable';
-// import { Earcut } from "babylonjs";
+import "@babylonjs/loaders"; // 关键：引入插件
 
 export class ModelingTool {
-    /**
-     * 创建平面图形
-     * @param points 二维点集，用于定义平面形状
-     * @param material 材质，用于渲染平面
-     * @returns 返回创建的平面图形
-     */
-    public static createPlaneShape(points: BABYLON.Vector2[], scene?: BABYLON.Scene): BABYLON.Mesh {
-        return this.CreateShapeGeometry([points], scene);
-    }
-
     /**
      * 创建拉伸造型
      * @param points 二维点集，用于定义拉伸轮廓
@@ -34,26 +24,73 @@ export class ModelingTool {
 
     /**
      * 加载 GLTF 模型
-     * @param url GLTF 文件路径
+     * @param rootUrl GLTF 文件根路径
+     * @param name GLTF 文件名
+     * @param scene 场景对象
      * @returns 返回 Promise，解析为加载的模型
      */
-    public static loadGLTF(url: string): Promise<BABYLON.Mesh> {
+    public static async loadGLTF(url: string, scene: BABYLON.Scene): Promise<BABYLON.TransformNode | undefined> {
         return new Promise((resolve, reject) => {
-            // 确保加载了 GLB 插件
-            BABYLON.SceneLoader.OnPluginActivatedObservable.addOnce((loader) => {
-                if (loader.name === "gltf") {
-                    BABYLON.SceneLoader.ImportMesh("", "", url, TemporaryVariable.scene3d, (meshes) => {
-                        if (meshes.length > 0) {
-                            resolve(meshes[0] as BABYLON.Mesh);
-                        } else {
-                            reject(new Error("No meshes found in the GLTF file."));
-                        }
-                    }, undefined, (error) => {
-                        reject(error);
-                    });
+            // 配置 Draco 解码器路径
+            BABYLON.DracoCompression.Configuration = {
+                decoder: {
+                    wasmUrl: "https://tx-wsai-cdn.yfway.com/sj/designtool/js/draco171/draco_decoder.wasm",
+                    fallbackUrl: "https://tx-wsai-cdn.yfway.com/sj/designtool/js/draco171/draco_decoder.js"
                 }
+            };
+
+            // 加载所有网格，从指定路径的 model.glb 文件
+            BABYLON.SceneLoader.ImportMeshAsync(
+                "", 
+                url, 
+                "", 
+                scene, 
+                (event) => console.log(`加载进度: ${event.loaded}/${event.total}`),
+                ".glb"
+            ).then((result) => {
+                const node = new BABYLON.TransformNode("node");
+                result.meshes.forEach((mesh) => {
+                    node.addChild(mesh);
+                });
+                resolve(node);
+            }, (error) => {
+                console.error('Failed to load GLTF model:', error);
+                reject(undefined);
             });
         });
+    }
+
+    /**
+     * 获取节点及其子节点下所有 Mesh 的合并包围盒
+     * @param rootNode 根节点（TransformNode 或 Mesh）
+     * @returns 整体包围盒（若节点下无 Mesh 则返回 null）
+     */
+    public static getHierarchyBoundingBox(rootNode: BABYLON.Node): BABYLON.BoundingInfo | null {
+        // 收集所有子 Mesh
+        const meshes: BABYLON.Mesh[] = [];
+        if (rootNode instanceof BABYLON.Mesh) {
+            meshes.push(rootNode);
+        }
+        const childMeshes = rootNode.getChildMeshes(true) as BABYLON.Mesh[];
+        meshes.push(...childMeshes);
+
+        if (meshes.length === 0) return null;
+
+        // 初始化全局最小/最大值
+        let globalMin = new BABYLON.Vector3(Infinity, Infinity, Infinity);
+        let globalMax = new BABYLON.Vector3(-Infinity, -Infinity, -Infinity);
+
+        // 遍历所有 Mesh 并合并包围盒
+        meshes.forEach(mesh => {
+            const boundingInfo = mesh.getBoundingInfo();
+            const localMin = boundingInfo.boundingBox.minimumWorld;
+            const localMax = boundingInfo.boundingBox.maximumWorld;
+
+            globalMin = BABYLON.Vector3.Minimize(globalMin, localMin);
+            globalMax = BABYLON.Vector3.Maximize(globalMax, localMax);
+        });
+
+        return new BABYLON.BoundingInfo(globalMin, globalMax);
     }
 
     /**

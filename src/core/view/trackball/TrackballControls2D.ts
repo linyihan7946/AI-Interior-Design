@@ -1,5 +1,5 @@
 
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 
 export class TrackballControls2D {
     private _camera: BABYLON.ArcRotateCamera;
