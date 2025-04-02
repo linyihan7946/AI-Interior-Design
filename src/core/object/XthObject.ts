@@ -38,9 +38,9 @@ export class XthObject extends XthTree {
 
     [key: string]: any;
     @JsonProperty(false) // 控制object2不导出
-    object2: BABYLON.TransformNode = new BABYLON.TransformNode("object2");
+    object2 = new BABYLON.TransformNode("object2");
     @JsonProperty(false) // 控制object3不导出
-    object3: BABYLON.TransformNode = new BABYLON.TransformNode("object3");
+    object3 = new BABYLON.TransformNode("object3");
 
     constructor(json?: any) {
         super();
@@ -115,8 +115,10 @@ export class XthObject extends XthTree {
         this.matrix2 = this.matrix2.multiply(matrix);
         this.matrix3 = this.matrix3.multiply(matrix);
         // 更新对象的变换
-        ModelingTool.applyMatrix4(this.object2, matrix);
-        ModelingTool.applyMatrix4(this.object3, matrix);
+        const object2 = ModelingTool.getTopTransformNode(this.object2);
+        const object3 = ModelingTool.getTopTransformNode(this.object3);
+        ModelingTool.applyMatrix4(object2, matrix);
+        ModelingTool.applyMatrix4(object3, matrix);
     }
 
     remove(): void {
@@ -141,8 +143,10 @@ export class XthObject extends XthTree {
     setParent(parent: XthTree): void {
         super.setParent(parent);
         if (parent instanceof XthObject) {
-            this.object2.parent = parent.object2;
-            this.object3.parent = parent.object3;
+            const topTransformNode2 = ModelingTool.getTopTransformNode(this.object2);
+            topTransformNode2.parent = parent.object2;
+            const topTransformNode3 = ModelingTool.getTopTransformNode(this.object3);
+            topTransformNode3.parent = parent.object3;
         }
     }
 
@@ -251,10 +255,10 @@ export class XthObject extends XthTree {
         this.normalLineColor3 = color;
     }
 
-    getSelfObject2(): BABYLON.AbstractMesh {
-        let selfObject2 = this.object2.getChildMeshes().find(child => (child.metadata && child.metadata.isSelfObject === true));
+    getSelfObject2(): BABYLON.TransformNode {
+        let selfObject2 = this.object2.getChildTransformNodes().find(child => (child.metadata && child.metadata.isSelfObject === true));
         if (!selfObject2) {
-            selfObject2 = new BABYLON.Mesh("selfObject2");
+            selfObject2 = new BABYLON.TransformNode("selfObject2");
             if (!selfObject2.metadata) {
                 selfObject2.metadata = {};
             }
@@ -264,10 +268,10 @@ export class XthObject extends XthTree {
         return selfObject2;
     }
 
-    getSelfObject3(): BABYLON.AbstractMesh {
-        let selfObject3 = this.object3.getChildMeshes().find(child => (child.metadata && child.metadata.isSelfObject === true));
+    getSelfObject3(): BABYLON.TransformNode {
+        let selfObject3 = this.object3.getChildTransformNodes().find(child => (child.metadata && child.metadata.isSelfObject === true));
         if (!selfObject3) {
-            selfObject3 = new BABYLON.Mesh("selfObject3");
+            selfObject3 = new BABYLON.TransformNode("selfObject3");
             if (!selfObject3.metadata) {
                 selfObject3.metadata = {};
             }

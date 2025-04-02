@@ -50,7 +50,7 @@ export class ModelingTool {
             ).then((result) => {
                 const node = new BABYLON.TransformNode("node");
                 result.meshes.forEach((mesh) => {
-                    node.addChild(mesh);
+                    mesh.parent = node;
                 });
                 resolve(node);
             }, (error) => {
@@ -139,7 +139,7 @@ export class ModelingTool {
      * @param object 要删除的Object3D对象
      * @param removeFromParent 是否从父物体上移除，默认为true
      */
-    public static removeObject3D(object: BABYLON.AbstractMesh, removeFromParent: boolean = false): void {
+    public static removeObject3D(object: BABYLON.TransformNode, removeFromParent: boolean = false): void {
         // 遍历子孙物体
         this.traverse(object, (child) => {
             if (child instanceof BABYLON.Mesh) {
@@ -164,44 +164,43 @@ export class ModelingTool {
     }
 
     public static setTransformNodeMatrix(transformNode: BABYLON.TransformNode, matrix: BABYLON.Matrix): void {
-        const scale = new BABYLON.Vector3();
-        const rotation = new BABYLON.Quaternion();
-        const translation = new BABYLON.Vector3();
-        matrix.decompose(scale, rotation, translation);
-        transformNode.position = translation;
-        transformNode.rotationQuaternion = rotation; // 使用四元数
-        transformNode.scaling = scale;
+        transformNode.setPreTransformMatrix(matrix);
+        // const scale = new BABYLON.Vector3();
+        // const rotation = new BABYLON.Quaternion();
+        // const translation = new BABYLON.Vector3();
+        // matrix.decompose(scale, rotation, translation);
+        // transformNode.position = translation;
+        // transformNode.rotationQuaternion = rotation; // 使用四元数
+        // transformNode.scaling = scale;
     }
 
-    public static applyMatrix4(mesh: BABYLON.TransformNode, matrix: BABYLON.Matrix): void {
-        // 假设 mesh 已有父节点 originalParent
-        const originalParent = mesh.parent;
-
-        // 创建中间 TransformNode
-        const intermediateNode = new BABYLON.TransformNode("intermediateNode");
-        intermediateNode.parent = originalParent; // 中间节点继承原父节点
-
-        // 将 Mesh 的父节点设为中间节点
-        mesh.parent = intermediateNode;
-
-        // 调整中间节点的矩阵以继承原 Mesh 的变换
-        const originalMatrix = mesh.computeWorldMatrix(true); // 获取原世界矩阵
-        const newMatrix = originalMatrix.multiply(matrix);
-        this.setTransformNodeMatrix(intermediateNode, newMatrix);
-
-        // 将 Mesh 的局部变换重置（因其父节点现在是中间节点）
-        mesh.position = BABYLON.Vector3.Zero();
-        mesh.rotation = BABYLON.Vector3.Zero();
-        mesh.scaling = BABYLON.Vector3.One();
-
-        // 后续矩阵叠加操作针对中间节点
-        intermediateNode.computeWorldMatrix(true);
+    public static applyMatrix4(node: BABYLON.TransformNode, matrix: BABYLON.Matrix): BABYLON.TransformNode {
+        const originalParent = node.parent;
+        const intermediateNode = new BABYLON.TransformNode("transformNode");
+        intermediateNode.parent = originalParent;
+        node.parent = intermediateNode;
+        this.setTransformNodeMatrix(intermediateNode, matrix);
+        node.computeWorldMatrix(true);
+        return intermediateNode;
     }
 
     public static setColor(color: BABYLON.Color3, hexValue: number): void {
         color.r = ((hexValue >> 16) & 0xff) / 255; // 0xcc → 204 → 0.8
         color.g = ((hexValue >> 8) & 0xff) / 255;  // 0xcc → 204 → 0.8
         color.b = (hexValue & 0xff) / 255;         // 0xcc → 204 → 0.8
+    }
+
+    /**
+     * 获取当前 transformNode 节点的连续名字为 "transformNode" 的最顶级的 transformNode 节点
+     * @param transformNode 当前 transformNode 节点
+     * @returns 最顶级的 transformNode 节点
+     */
+    public static getTopTransformNode(transformNode: BABYLON.TransformNode): BABYLON.TransformNode {
+        let currentNode = transformNode;
+        while (currentNode.parent && currentNode.parent.name === "transformNode") {
+            currentNode = currentNode.parent as BABYLON.TransformNode;
+        }
+        return currentNode;
     }
 
     // 创建一个多边形外圈且有多个内孔的平面Mesh

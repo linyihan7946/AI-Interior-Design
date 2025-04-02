@@ -44,21 +44,21 @@ export class XthOpening extends XthObject {
     build2d(scene2?: BABYLON.Scene): void {
         const selfObject2 = this.getSelfObject2();
         ModelingTool.removeObject3D(selfObject2);
-
         const points = this.get2DPoints();
         const material = new BABYLON.StandardMaterial("material", scene2);
         material.diffuseColor = this.getNormalMeshColor2();
         material.emissiveColor = this.getNormalMeshColor2();
         material.disableLighting = true;
         const planeShape = ModelingTool.CreateShapeGeometry([points], scene2);
-        const matrix = BABYLON.Matrix.Translation(0, 0, 10);
-        ModelingTool.applyMatrix4(planeShape, matrix);
+        // const matrix = BABYLON.Matrix.Translation(0, 0, 2000);
+        planeShape.position.z = 2000;
         planeShape.material = material;
         planeShape.parent = selfObject2;
+        // ModelingTool.applyMatrix4(planeShape, matrix);
     }
 
     build3d(scene3?: BABYLON.Scene): void {
-        if (!TemporaryVariable.scene3d) {
+        if (!scene3) {
             return;
         }
         const selfObject3 = this.getSelfObject3();
@@ -66,7 +66,7 @@ export class XthOpening extends XthObject {
 
         const gltfPath = Configure.Instance.gltfPaths[this.type];
         if (gltfPath) {
-            ModelingTool.loadGLTF(gltfPath, TemporaryVariable.scene3d).then((model) => {
+            ModelingTool.loadGLTF(gltfPath, scene3).then((model) => {
                 if (!model) {
                     return;
                 }
@@ -86,7 +86,9 @@ export class XthOpening extends XthObject {
                     this.height / size.z // 根据实际厚度和模型默认厚度进行缩放
                 );
                 model.scaling = scale; // 应用缩放比例
-                selfObject3.addChild(model);
+                model.parent = selfObject3;
+                model.computeWorldMatrix(true);
+
             }).catch((error) => {
                 console.error('Failed to load GLTF model:', error);
                 // 如果加载失败，使用默认的拉伸造型
@@ -97,7 +99,7 @@ export class XthOpening extends XthObject {
                 material.emissiveColor = this.getNormalMeshColor3();
                 material.disableLighting = true;
                 const extrudedShape = ModelingTool.createExtrudedShape(points, height, material, scene3);
-                selfObject3.addChild(extrudedShape);
+                extrudedShape.parent = selfObject3;
             });
         } else {
             // 如果没有配置 GLTF 路径，使用默认的拉伸造型
@@ -128,7 +130,7 @@ export class XthOpening extends XthObject {
         const projectedPoint = Geometry.projectPointToLine(doorCenter, {
             start: wall.startPoint,
             end: wall.endPoint
-        }).subtract(wall.startPoint.add(wall.endPoint).multiplyByFloats(0.5, 0.5, 0.5));
+        });
 
         // 计算门窗的旋转角度以适配墙体的方向
         const angle = Math.atan2(wallDirection.y, wallDirection.x);

@@ -138,6 +138,8 @@ export class CreateRectangularRoomCommand extends CommandBase {
             return;
         }
 
+        // 原点在左下方
+
         // 创建四面墙
         const wallLength = 4000;
         const wallHeight = 2800;
@@ -187,15 +189,15 @@ export class CreateRectangularRoomCommand extends CommandBase {
         door.type = OpeningType.SingleDoor;
         door.length = 900;
         door.height = 2100;
-        door.thickness = 200;
+        door.thickness = 300;
         door.elevation = 0;
 
         const wallCenter = leftWall.startPoint.add(leftWall.endPoint).multiplyByFloats(0.5, 0.5, 0.5);
         const matrix = BABYLON.Matrix.Translation(wallCenter.x, wallCenter.y, wallCenter.z);
-        leftWall.addChild(door);
+        
         door.applyMatrix4(matrix);
         door.dockToWall(leftWall);
-        
+        leftWall.addChild(door);
 
         // 重建所有对象
         leftWall.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);

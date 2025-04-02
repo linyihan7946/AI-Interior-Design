@@ -94,8 +94,6 @@ export class XthWall extends XthObject {
 
         // 应用变换矩阵到 planeShape
         ModelingTool.applyMatrix4(planeShape, transformMatrix);
-
-        
     }
 
     build3d(scene3: BABYLON.Scene | undefined): void {
