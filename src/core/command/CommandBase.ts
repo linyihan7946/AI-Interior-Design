@@ -25,7 +25,7 @@ export abstract class CommandBase {
      * 执行命令
      * @param args 命令参数
      */
-    public executeCommand(...args: any[]): void {
+    public executeCommand(...args: any[]): any {
         // 空函数，具体实现由子类完成
     }
 }

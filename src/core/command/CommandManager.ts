@@ -7,8 +7,9 @@
 import { CommandBase } from './CommandBase';
 import * as FileCommand from './FileCommand';
 import * as HouseTypeCommand from './HouseTypeCommand';
-import { getCommandRegistry } from './CommandRegistry';
+import * as AICommand from './AICommand';
 import * as TestCommand from './TestCommand';
+import { getCommandRegistry } from './CommandRegistry';
 
 export class CommandManager {
     constructor() {
@@ -21,6 +22,7 @@ export class CommandManager {
     public registerFileCommands(): void {
         FileCommand.register();
         HouseTypeCommand.register();
+        AICommand.register();
         TestCommand.register();
     }
 

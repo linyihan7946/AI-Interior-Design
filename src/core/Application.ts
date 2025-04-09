@@ -116,6 +116,13 @@ export class Application {
         this.start();
 
         console.log('Application initialized');
+
+        // 调用 aiChat 命令
+        this.executeCommand('aiChat', '今天广州天气怎么样？').then((response: any) => {
+            console.log('aiChat response:', response);
+        }).catch((error: any) => {
+            console.error('aiChat error:', error);
+        });
     }
 
     /**
@@ -174,11 +181,11 @@ export class Application {
      * @param command 命令名称
      * @param data 命令参数
      */
-    public executeCommand(command: string, data: any): void {
+    public executeCommand(command: string, data: any): any {
         const commandInstance = this.commandManager.getCommand(command);
         if (commandInstance) {
             console.log("当前执行的命令为:%s", command);
-            commandInstance.executeCommand(data);
+            return commandInstance.executeCommand(data);
         } else {
             console.warn(`Command ${command} not found`);
         }
