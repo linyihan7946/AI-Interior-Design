@@ -11,7 +11,8 @@ import { Configure } from '../bottomClass/Configure';
 export class View3d {
     private divId: string;
     public engine: BABYLON.Engine;
-    public camera: BABYLON.ArcRotateCamera;
+    public camera: BABYLON.ArcRotateCamera | null = null;
+    public scene: BABYLON.Scene | undefined = undefined;
     private container: HTMLCanvasElement | null;
 
     constructor(divId: string) {
@@ -27,10 +28,14 @@ export class View3d {
 
         // 初始化场景
         TemporaryVariable.scene3d = new BABYLON.Scene(this.engine);
+        console.log('TemporaryVariable.scene3d initialized:', TemporaryVariable.scene3d);
+        this.scene = TemporaryVariable.scene3d;
+        TemporaryVariable.scene3d.preventDefaultOnPointerDown = false;
+        TemporaryVariable.scene3d.preventDefaultOnPointerUp = false;
 
         // 初始化相机
         this.camera = new BABYLON.ArcRotateCamera("camera1", Math.PI / 2, Math.PI / 4, 10, new BABYLON.Vector3(2000, 1400, 6000), TemporaryVariable.scene3d);
-        this.camera.attachControl(this.container, true);
+        this.camera.attachControl(this.container, true); // 允许事件冒泡
         this.camera.setTarget(new BABYLON.Vector3(2000, 1400, -100));
 
         // 设置相机控制

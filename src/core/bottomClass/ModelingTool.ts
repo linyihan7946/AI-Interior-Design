@@ -71,7 +71,7 @@ export class ModelingTool {
         if (rootNode instanceof BABYLON.Mesh) {
             meshes.push(rootNode);
         }
-        const childMeshes = rootNode.getChildMeshes(true) as BABYLON.Mesh[];
+        const childMeshes = rootNode.getChildMeshes(false) as BABYLON.Mesh[];
         meshes.push(...childMeshes);
 
         if (meshes.length === 0) return null;
@@ -139,28 +139,46 @@ export class ModelingTool {
      * @param object 要删除的Object3D对象
      * @param removeFromParent 是否从父物体上移除，默认为true
      */
-    public static removeObject3D(object: BABYLON.TransformNode, removeFromParent: boolean = false): void {
-        // 遍历子孙物体
-        this.traverse(object, (child) => {
-            if (child instanceof BABYLON.Mesh) {
-                // 释放几何体和材质资源
-                if (child.geometry) {
-                    child.geometry.dispose();
-                }
-                if (child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach((material: any) => material.dispose());
-                    } else {
-                        child.material.dispose();
-                    }
-                }
-            }
-        });
+    public static removeObject3D(object: BABYLON.Node, removeFromParent: boolean = false): void {
+        // 定义一个函数来彻底删除 Mesh
 
-        // 从父级移除对象
+        // 解除与父对象的关联
         if (removeFromParent && object.parent) {
             object.parent = null;
         }
+
+        // 移除所有子对象
+        const childMeshes = object.getChildren();
+        childMeshes.forEach((childMesh) => {
+            this.removeObject3D(childMesh, true);
+        });
+
+        // 从场景中移除 Mesh
+        if (removeFromParent) {
+            object.dispose(false, false);
+        }
+
+        // 遍历子孙物体
+        // this.traverse(object, (child) => {
+        //     if (child instanceof BABYLON.Mesh) {
+        //         // 释放几何体和材质资源
+        //         if (child.geometry) {
+        //             child.geometry.dispose();
+        //         }
+        //         if (child.material) {
+        //             if (Array.isArray(child.material)) {
+        //                 child.material.forEach((material: any) => material.dispose());
+        //             } else {
+        //                 child.material.dispose();
+        //             }
+        //         }
+        //     }
+        // });
+
+        // // 从父级移除对象
+        // if (removeFromParent && object.parent) {
+        //     object.parent = null;
+        // }
     }
 
     public static setTransformNodeMatrix(transformNode: BABYLON.TransformNode, matrix: BABYLON.Matrix): void {
@@ -201,6 +219,53 @@ export class ModelingTool {
             currentNode = currentNode.parent as BABYLON.TransformNode;
         }
         return currentNode;
+    }
+
+    /**
+     * 根据 TransformNode 生成或删除包络框
+     * @param node 要生成或删除包络框的 TransformNode
+     * @param scene 场景对象
+     * @param create 是否生成包络框，默认为 true
+     */
+    public static toggleBoundingBox(node: BABYLON.TransformNode, scene?: BABYLON.Scene, create: boolean = true): void {
+        // 查找是否已经存在包络框
+        const boundingBoxNode = node.getChildTransformNodes().find(child => child.name === "boundingBox");
+
+        if (create) {
+            // 如果已经存在包络框，则先删除
+            if (boundingBoxNode) {
+                this.removeObject3D(boundingBoxNode, true);
+            }
+
+            // 获取节点的包围盒
+            const boundingInfo = this.getHierarchyBoundingBox(node);
+            if (!boundingInfo) return;
+
+            // 创建包络框
+            const boundingBox = BABYLON.MeshBuilder.CreateBox("boundingBox", {
+                width: boundingInfo.boundingBox.maximumWorld.x - boundingInfo.boundingBox.minimumWorld.x,
+                height: boundingInfo.boundingBox.maximumWorld.y - boundingInfo.boundingBox.minimumWorld.y,
+                depth: boundingInfo.boundingBox.maximumWorld.z - boundingInfo.boundingBox.minimumWorld.z
+            }, scene);
+
+            // 设置包络框的位置为包围盒的中心
+            const center = boundingInfo.boundingBox.center;
+            boundingBox.position = center;
+
+            // 设置包络框的父节点为当前节点
+            boundingBox.parent = node;
+
+            // 设置包络框的材质为线框材质
+            const material = new BABYLON.StandardMaterial("boundingBoxMaterial", scene);
+            material.wireframe = true;
+            material.emissiveColor = new BABYLON.Color3(1, 0, 0); // 红色线框
+            boundingBox.material = material;
+        } else {
+            // 如果不需要生成包络框，则删除已有的包络框
+            if (boundingBoxNode) {
+                this.removeObject3D(boundingBoxNode, true);
+            }
+        }
     }
 
     // 创建一个多边形外圈且有多个内孔的平面Mesh

@@ -30,6 +30,8 @@ export class View2d {
         // 初始化场景
         this.scene = new BABYLON.Scene(this.engine);
         TemporaryVariable.scene2d = this.scene;
+        TemporaryVariable.scene2d.preventDefaultOnPointerDown = false;
+        TemporaryVariable.scene2d.preventDefaultOnPointerUp = false;
 
         // 设置场景背景色
         const bgColor = Configure.Instance.backgroundColor2;

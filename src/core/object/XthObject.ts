@@ -2,6 +2,7 @@ import * as BABYLON from '@babylonjs/core';
 import { XthTree } from './XthTree';
 import { JsonProperty } from '../bottomClass/Decorator';
 import { ModelingTool } from '../bottomClass/ModelingTool';
+import { TemporaryVariable } from '../TemporaryVariable';
 
 export class XthObject extends XthTree {
     @JsonProperty()
@@ -42,6 +43,9 @@ export class XthObject extends XthTree {
     @JsonProperty(false) // 控制object3不导出
     object3 = new BABYLON.TransformNode("object3");
 
+    @JsonProperty(false) // 控制object3不导出
+    isSelected: boolean = false;
+
     constructor(json?: any) {
         super();
         // 确保构造函数的名字不会被改变
@@ -50,6 +54,18 @@ export class XthObject extends XthTree {
             writable: false,
             configurable: true
         });
+
+        // 为 object2 和 object3 打上扩展数据
+        if (!this.object2.metadata) {
+            this.object2.metadata = {};
+        }
+        this.object2.metadata.object = this;
+
+        if (!this.object3.metadata) {
+            this.object3.metadata = {};
+        }
+        this.object3.metadata.object = this;
+
         this.fromJSON(json);
     }
 
@@ -279,5 +295,37 @@ export class XthObject extends XthTree {
             selfObject3.parent = this.object3;
         }
         return selfObject3;
+    }
+
+    /**
+     * 设置选中状态
+     * @param selected 是否选中
+     */
+    setSelected(selected: boolean): void {
+        this.isSelected = selected;
+        this.updateHighlight();
+    }
+
+    /**
+     * 获取选中状态
+     * @returns 是否选中
+     */
+    getSelected(): boolean {
+        return this.isSelected;
+    }
+
+    /**
+     * 更新高亮效果
+     */
+    updateHighlight(): void {
+        if (this.isSelected) {
+            // 显示包络框
+            ModelingTool.toggleBoundingBox(this.object2, TemporaryVariable.scene2d, true);
+            ModelingTool.toggleBoundingBox(this.object3, TemporaryVariable.scene3d, true);
+        } else {
+            // 隐藏包络框
+            ModelingTool.toggleBoundingBox(this.object2, TemporaryVariable.scene2d, false);
+            ModelingTool.toggleBoundingBox(this.object3, TemporaryVariable.scene3d, false);
+        }
     }
 }

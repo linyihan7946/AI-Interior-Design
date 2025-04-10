@@ -10,6 +10,7 @@ import { Configure } from "./bottomClass/Configure";
 import { View3d } from './view/View3d';
 import { ReactorManager } from "./manager/ReactorManager";
 import { View2d } from "./view/View2d";
+import { TemporaryVariable } from "./TemporaryVariable";
 
 export class Application {
     private _sceneManager?: SceneManager;
@@ -83,27 +84,32 @@ export class Application {
      * 构造函数
      * @param param 可选参数，用于初始化应用程序
      */
-    constructor(param?: { view3dId?: string; view2dId?: string }) {
+    constructor() {
+        
+    }
+
+    /**
+     * 初始化应用程序
+     */
+    public initialize(param?: { view3dId?: string; view2dId?: string }): void {
         // 将 param 传递给 Configure 进行反序列化
         if (param) {
             Configure.Instance.fromJSON(param);
         }
 
+        this.sceneManager;
+
         // 初始化 View3d，如果 param 中包含 view3dId
         if (param && param.view3dId) {
             this.view3d = new View3d(param.view3dId);
+            TemporaryVariable.scene3d = this.view3d.scene;
         }
 
         // 初始化 View2d，如果 param 中包含 view2dId
         if (param && param.view2dId) {
             this.view2d = new View2d(param.view2dId);
         }
-    }
 
-    /**
-     * 初始化应用程序
-     */
-    public initialize(): void {
         this.reactorManager.registryAll();
 
         // 注册文件模块命令
@@ -122,11 +128,11 @@ export class Application {
      * 初始化鼠标和键盘事件监听
      */
     private initEventListeners(): void {
-        window.addEventListener('mousedown', this.handleMouseDown.bind(this));
-        window.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        window.addEventListener('mousemove', this.handleMouseMove.bind(this));
-        window.addEventListener('keydown', this.handleKeyDown.bind(this));
-        window.addEventListener('keyup', this.handleKeyUp.bind(this));
+        document.addEventListener('mousedown', this.handleMouseDown.bind(this), false);
+        document.addEventListener('mouseup', this.handleMouseUp.bind(this), false);
+        document.addEventListener('mousemove', this.handleMouseMove.bind(this), false);
+        document.addEventListener('keydown', this.handleKeyDown.bind(this), false);
+        document.addEventListener('keyup', this.handleKeyUp.bind(this), false);
     }
 
     /**
@@ -134,7 +140,7 @@ export class Application {
      * @param event 鼠标事件
      */
     private handleMouseDown(event: MouseEvent): void {
-        // 处理鼠标按下事件
+        this.sceneManager.handleMouseDown(event); // 允许事件冒泡
     }
 
     /**
@@ -142,7 +148,7 @@ export class Application {
      * @param event 鼠标事件
      */
     private handleMouseUp(event: MouseEvent): void {
-        // 处理鼠标释放事件
+        this.sceneManager.handleMouseUp(event); // 允许事件冒泡
     }
 
     /**
@@ -150,7 +156,7 @@ export class Application {
      * @param event 鼠标事件
      */
     private handleMouseMove(event: MouseEvent): void {
-        // 处理鼠标移动事件
+        this.sceneManager.handleMouseMove(event);
     }
 
     /**

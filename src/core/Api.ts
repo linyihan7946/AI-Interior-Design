@@ -5,7 +5,6 @@
  * @Version: 1.0
  */
 import { Application } from './Application';
-import { Configure } from './bottomClass/Configure';
 
 export class Api {
     private static app: Application;
@@ -15,8 +14,8 @@ export class Api {
      * @param param 初始化参数
      */
     public static init(param?: { view3dId?: string; view2dId?: string }): void {
-        this.app = new Application(param);
-        this.app.initialize();
+        this.app = new Application();
+        this.app.initialize(param);
     }
 
     /**
