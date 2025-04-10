@@ -42,4 +42,26 @@ export class Api {
     public static executeCommand(command: string, data: any): void {
         this.app.executeCommand(command, data);
     }
+
+    /**
+     * 解析大语言模型返回的 API 执行文本
+     * @param responseText 大语言模型返回的文本
+     * @returns 解析后的对象或字符串
+     */
+    public static parseLLMResponse(responseText: string): any {
+        if (!responseText) {
+            return;
+        }
+        const info = JSON.parse(responseText);
+        const result = this.app.executeCommand(info.command, info.parameters);
+        return result;
+        // if (parsedCommand.action === "executeCommand") {
+        //     const parameters = parsedCommand.parameters;
+        //     if (!parameters || !parameters.commandName) {
+        //         return;
+        //     }
+        //     const result = this.app.executeCommand(parsedCommand.parameters.commandName, parsedCommand.parameters.commandParams);
+        //     return result;
+        // }
+    }
 }

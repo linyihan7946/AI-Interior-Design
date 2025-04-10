@@ -116,13 +116,6 @@ export class Application {
         this.start();
 
         console.log('Application initialized');
-
-        // 调用 aiChat 命令
-        this.executeCommand('aiChat', '今天广州天气怎么样？').then((response: any) => {
-            console.log('aiChat response:', response);
-        }).catch((error: any) => {
-            console.error('aiChat error:', error);
-        });
     }
 
     /**

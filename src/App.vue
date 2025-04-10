@@ -1,14 +1,13 @@
-<!--
- * @Author: LinYiHan
- * @Date: 2025-02-26 11:53:54
- * @Description: 
- * @Version: 1.0
--->
 <template>
   <div id="app">
     <div class="canvas-container">
       <Canvas3D ref="canvas3D" />
       <Canvas2D ref="canvas2D" />
+    </div>
+    <!-- 悬浮对话窗口 -->
+    <div class="chat-window">
+      <input type="text" v-model="userInput" placeholder="请输入您的问题" />
+      <button @click="handleChat">确定</button>
     </div>
   </div>
 </template>
@@ -17,7 +16,7 @@
 import { defineComponent, onMounted, ref } from 'vue';
 import Canvas3D from '@/components/Canvas3D.vue';
 import Canvas2D from '@/components/Canvas2D.vue';
-import { Api } from '@/core/Api';
+import { Api } from './core/Api';
 
 export default defineComponent({
   name: 'App',
@@ -39,15 +38,31 @@ export default defineComponent({
             }
             Api.executeCommand("newFile", {});
             // Api.executeCommand("createOneWall", {});
-            Api.executeCommand("createRectangularRoom", {}); // 只调用创建矩形房间命令
+            // Api.executeCommand("createRectangularRoom", {}); // 只调用创建矩形房间命令
         }
     });
 
-    return {
-        canvas3D,
-        canvas2D
+    const userInput = ref('');
+
+    const handleChat = async () => {
+      if (userInput.value) {
+        try {
+          const response = await Api.getApp().executeCommand('aiChat', userInput.value);
+          const parsedResponse = Api.parseLLMResponse(response);
+          console.log('Parsed response:', parsedResponse);
+        } catch (error) {
+          console.error('Error executing aiChat command:', error);
+        }
+      }
     };
-  }
+
+    return {
+      canvas3D,
+      canvas2D,
+      userInput,
+      handleChat,
+    };
+  },
 });
 </script>
 
@@ -83,5 +98,27 @@ html, body {
 
 .canvas-container > Canvas2D {
   order: 2;
+}
+
+/* 悬浮对话窗口样式 */
+.chat-window {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 300px;
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  z-index: 1000;
+}
+
+.chat-window input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.chat-window button {
+  width: 100%;
 }
 </style>
