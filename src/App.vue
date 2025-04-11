@@ -8,6 +8,12 @@
     <div class="chat-window">
       <input type="text" v-model="userInput" placeholder="请输入您的问题" />
       <button @click="handleChat">确定</button>
+      <div class="preset-messages">
+        <button @click="sendPresetMessage('新建场景')">新建场景</button>
+        <button @click="sendPresetMessage('帮我创建一个矩形房间')">创建一个矩形房间</button>
+        <button @click="sendPresetMessage('帮我添加一个单开门：宽度1000，高度1800，离地高0，厚度480，位置是（0,2000,0）')">添加一个单开门</button>
+        <button @click="sendPresetMessage('帮我删除当前选中物体')">删除当前选中物体</button>
+      </div>
     </div>
   </div>
 </template>
@@ -78,11 +84,17 @@ export default defineComponent({
       }
     };
 
+    const sendPresetMessage = (message: string) => {
+      userInput.value = message;
+      handleChat();
+    };
+
     return {
       canvas3D,
       canvas2D,
       userInput,
       handleChat,
+      sendPresetMessage,
     };
   },
 });
@@ -142,5 +154,11 @@ html, body {
 
 .chat-window button {
   width: 100%;
+  margin-bottom: 5px;
+}
+
+.preset-messages button {
+  width: 100%;
+  margin-bottom: 5px;
 }
 </style>
