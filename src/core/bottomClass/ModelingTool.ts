@@ -157,28 +157,6 @@ export class ModelingTool {
         if (removeFromParent) {
             object.dispose(false, false);
         }
-
-        // 遍历子孙物体
-        // this.traverse(object, (child) => {
-        //     if (child instanceof BABYLON.Mesh) {
-        //         // 释放几何体和材质资源
-        //         if (child.geometry) {
-        //             child.geometry.dispose();
-        //         }
-        //         if (child.material) {
-        //             if (Array.isArray(child.material)) {
-        //                 child.material.forEach((material: any) => material.dispose());
-        //             } else {
-        //                 child.material.dispose();
-        //             }
-        //         }
-        //     }
-        // });
-
-        // // 从父级移除对象
-        // if (removeFromParent && object.parent) {
-        //     object.parent = null;
-        // }
     }
 
     public static setTransformNodeMatrix(transformNode: BABYLON.TransformNode, matrix: BABYLON.Matrix): void {

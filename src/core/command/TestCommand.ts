@@ -14,7 +14,7 @@ export class TestCommand extends CommandBase {
         super({ name: 'TestCommand', shouldRecordUndo: true, shouldCancelPreviousCommand: false });
     }
 
-    public executeCommand(...args: any[]): void {
+    public executeCommand(args: any): void {
         // 调用 TestUtils 的测试方法
         TestUtils.test();
         console.log('Test command executed');

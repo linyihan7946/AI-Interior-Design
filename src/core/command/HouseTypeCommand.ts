@@ -16,6 +16,7 @@ import { ModelingTool } from '../bottomClass/ModelingTool';
 import { OpeningType } from '../enum/OpeningType';
 import { TemporaryVariable } from '../bottomClass/TemporaryVariable';
 import { XthLine } from '../object/XthLine';
+import { XthObject } from '../object/XthObject';
 
 @Command('createSingleDoor')
 export class CreateSingleDoorCommand extends CommandBase {
@@ -23,38 +24,38 @@ export class CreateSingleDoorCommand extends CommandBase {
         super({ name: 'CreateSingleDoorCommand', shouldRecordUndo: true, shouldCancelPreviousCommand: false });
     }
 
-    public executeCommand(...args: any[]): void {
-        // 创建单开门实例
+    public executeCommand(args: any): void {
+        // 解析传入的参数
+        const {type, width, height, thickness, elevation, position} = args;
+
+        // 创建门实例
         const door = new XthOpening();
-        door.type = OpeningType.SingleDoor;
-        door.length = 900;
-        door.height = 2100;
-        door.thickness = 400; // 将门的厚度改为200
-        door.elevation = 0;
+        door.type = type;
+        door.length = width;
+        door.height = height;
+        door.thickness = thickness;
+        door.elevation = elevation;
 
         // 获取当前场景
         const sceneManager = Api.getApp().sceneManager;
         const scene = sceneManager.getScene();
 
         if (scene) {
-            // 查找场景中的第一个墙体
-            const walls = scene.children.filter(child => child instanceof XthWall);
-            if (walls.length > 0) {
-                const firstWall = walls[0] as XthWall;
-                // 将门挂载到第一个墙体上
-                firstWall.addChild(door);
-                // 计算墙体中心位置
-                const wallCenter = firstWall.startPoint.add(firstWall.endPoint).multiplyByFloats(0.5, 0.5, 0.5);
-                // 使用 applyMatrix4 方法设置门的位置
-                const matrix = BABYLON.Matrix.Translation(wallCenter.x, wallCenter.y, wallCenter.z);
+            // 获取当前选中的物体
+            const selectedObject = sceneManager.getSelectedObject();
+            if (selectedObject && selectedObject.isKindOf('XthWall')) {
+                const wall = selectedObject as XthWall;
+                
+                // 计算门的位置
+                const matrix = BABYLON.Matrix.Translation(position.x, position.y, position.z);
                 door.applyMatrix4(matrix);
+                door.dockToWall(wall);
+                // 将门挂载到指定墙体上
+                wall.addChild(door);
                 door.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
-                console.log('Single door created and mounted to the first wall');
+                console.log('Door created and mounted to the specified wall');
             } else {
-                // 如果没有墙体，直接将门添加到场景中
-                scene.addChild(door);
-                door.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
-                console.log('Single door created and added to the scene');
+                console.warn('No wall selected or the selected object is not a wall');
             }
         } else {
             console.warn('Scene is not initialized');
@@ -68,7 +69,7 @@ export class CreateOneWallCommand extends CommandBase {
         super({ name: 'CreateOneWallCommand', shouldRecordUndo: true, shouldCancelPreviousCommand: false });
     }
 
-    public executeCommand(...args: any[]): void {
+    public executeCommand(args: any): void {
         // 创建墙体实例
         const wall = new XthWall();
         wall.startPoint = new BABYLON.Vector3(0, 0, 0);
@@ -97,7 +98,7 @@ export class CreateGroundCommand extends CommandBase {
         super({ name: 'CreateGroundCommand', shouldRecordUndo: true, shouldCancelPreviousCommand: false });
     }
 
-    public executeCommand(...args: any[]): void {
+    public executeCommand(args: any): void {
         // 创建地面实例
         const ground = new XthGround();
         const outline = new XthCompositeLine();
@@ -129,7 +130,7 @@ export class CreateRectangularRoomCommand extends CommandBase {
         super({ name: 'CreateRectangularRoomCommand', shouldRecordUndo: true, shouldCancelPreviousCommand: false });
     }
 
-    public executeCommand(...args: any[]): void {
+    public executeCommand(args: any): void {
         const sceneManager = Api.getApp().sceneManager;
         const scene = sceneManager.getScene();
 
@@ -185,19 +186,19 @@ export class CreateRectangularRoomCommand extends CommandBase {
         scene.addChild(ground);
 
         // 在左边的墙上中间位置添加一个单开门
-        const door = new XthOpening();
-        door.type = OpeningType.SingleDoor;
-        door.length = 900;
-        door.height = 2100;
-        door.thickness = 300;
-        door.elevation = 0;
+        // const door = new XthOpening();
+        // door.type = OpeningType.SingleDoor;
+        // door.length = 900;
+        // door.height = 2100;
+        // door.thickness = 300;
+        // door.elevation = 0;
 
-        const wallCenter = leftWall.startPoint.add(leftWall.endPoint).multiplyByFloats(0.5, 0.5, 0.5);
-        const matrix = BABYLON.Matrix.Translation(wallCenter.x, wallCenter.y, wallCenter.z);
+        // const wallCenter = leftWall.startPoint.add(leftWall.endPoint).multiplyByFloats(0.5, 0.5, 0.5);
+        // const matrix = BABYLON.Matrix.Translation(wallCenter.x, wallCenter.y, wallCenter.z);
         
-        door.applyMatrix4(matrix);
-        door.dockToWall(leftWall);
-        leftWall.addChild(door);
+        // door.applyMatrix4(matrix);
+        // door.dockToWall(leftWall);
+        // leftWall.addChild(door);
 
         // 重建所有对象
         leftWall.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
@@ -205,7 +206,7 @@ export class CreateRectangularRoomCommand extends CommandBase {
         topWall.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
         bottomWall.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
         ground.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
-        door.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
+        // door.rebuild(TemporaryVariable.scene2d, TemporaryVariable.scene3d);
 
         console.log('Rectangular room created with a single door on the left wall');
     }

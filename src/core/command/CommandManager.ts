@@ -10,6 +10,7 @@ import * as HouseTypeCommand from './HouseTypeCommand';
 import * as AICommand from './AICommand';
 import * as TestCommand from './TestCommand';
 import { getCommandRegistry } from './CommandRegistry';
+import * as EditObjectCommand from './EditObjectCommand';
 
 export class CommandManager {
     constructor() {
@@ -24,6 +25,7 @@ export class CommandManager {
         HouseTypeCommand.register();
         AICommand.register();
         TestCommand.register();
+        EditObjectCommand.register(); // 注册编辑物体命令
     }
 
     /**

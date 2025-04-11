@@ -37,9 +37,31 @@ export default defineComponent({
                 });
             }
             Api.executeCommand("newFile", {});
+
+            // 创建一面墙
             // Api.executeCommand("createOneWall", {});
+
+            // // 创建矩形房间
             // Api.executeCommand("createRectangularRoom", {}); // 只调用创建矩形房间命令
-        }
+
+            // // 插入了单开门
+            // const scene = Api.getApp().sceneManager.getScene();
+            // if (scene) {
+            //   const walls = scene.findChildrenByType("XthWall", true);
+            //   if (walls.length > 0) {
+            //     const args = {
+            //         type: 1,
+            //         width: 1000,
+            //         height: 1800,
+            //         thickness: 480,
+            //         elevation: 0,
+            //         position: { x: 0, y: 1000, z: 0 },
+            //         wallId: walls[0].uuid
+            //     };
+            //     Api.executeCommand("createSingleDoor", args); // 只调用创建矩形房间命令
+            //   }
+            // }
+          }
     });
 
     const userInput = ref('');

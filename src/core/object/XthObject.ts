@@ -139,6 +139,8 @@ export class XthObject extends XthTree {
 
     remove(): void {
         super.remove();
+        ModelingTool.removeObject3D(this.object2, true);
+        ModelingTool.removeObject3D(this.object3, true);
     }
 
     /***/
@@ -166,10 +168,10 @@ export class XthObject extends XthTree {
         }
     }
 
-    isKindOf(type: Function): boolean {
+    isKindOf(type: string): boolean {
         let proto = Object.getPrototypeOf(this);
         while (proto) {
-            if (proto.constructor === type) {
+            if (proto.constructor.name === type) {
                 return true;
             }
             proto = Object.getPrototypeOf(proto);
@@ -177,8 +179,8 @@ export class XthObject extends XthTree {
         return false;
     }
 
-    isA(type: Function): boolean {
-        return this.constructor === type;
+    isA(type: string): boolean {
+        return this.constructor.name === type;
     }
 
     /**
@@ -225,7 +227,7 @@ export class XthObject extends XthTree {
 
     /**
      * 获取二维正常状态line的颜色
-     * @returns 颜色값
+     * @returns 颜色值
      */
     public getNormalLineColor2(): BABYLON.Color3 {
         return this.normalLineColor2;
@@ -295,6 +297,64 @@ export class XthObject extends XthTree {
             selfObject3.parent = this.object3;
         }
         return selfObject3;
+    }
+
+    /**
+     * 根据id搜索子物体
+     * @param id 子物体的id
+     * @param recursive 是否递归搜索
+     * @returns 找到的子物体，如果未找到则返回undefined
+     */
+    public findChildById(id: string, recursive: boolean = false): XthObject | undefined {
+        // 在当前子物体中查找
+        for (const child of this.children) {
+            if (child instanceof XthObject && child.uuid === id) {
+                return child;
+            }
+        }
+
+        // 如果递归查找，继续在子物体中查找
+        if (recursive) {
+            for (const child of this.children) {
+                if (child instanceof XthObject) {
+                    const found = child.findChildById(id, true);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * 根据类型搜索子物体
+     * @param type 子物体的类型
+     * @param recursive 是否递归搜索
+     * @returns 找到的子物体列表
+     */
+    public findChildrenByType(type: any, recursive: boolean = false): XthObject[] {
+        const result: XthObject[] = [];
+
+        // 在当前子物体中查找
+        for (const child of this.children) {
+            if (child instanceof XthObject && child.isKindOf(type)) {
+                result.push(child);
+            }
+        }
+
+        // 如果递归查找，继续在子物体中查找
+        if (recursive) {
+            for (const child of this.children) {
+                if (child instanceof XthObject) {
+                    const found = child.findChildrenByType(type, true);
+                    result.push(...found);
+                }
+            }
+        }
+
+        return result;
     }
 
     /**

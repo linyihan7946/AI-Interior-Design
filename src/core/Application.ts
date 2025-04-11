@@ -140,7 +140,10 @@ export class Application {
      * @param event 鼠标事件
      */
     private handleMouseDown(event: MouseEvent): void {
-        this.sceneManager.handleMouseDown(event); // 允许事件冒泡
+        const target = event.target as HTMLElement;
+        if (target.id === 'canvas3d' || target.id === 'canvas2dCanvas') {
+            this.sceneManager.handleMouseDown(event); // 允许事件冒泡
+        }
     }
 
     /**
@@ -148,7 +151,10 @@ export class Application {
      * @param event 鼠标事件
      */
     private handleMouseUp(event: MouseEvent): void {
-        this.sceneManager.handleMouseUp(event); // 允许事件冒泡
+        const target = event.target as HTMLElement;
+        if (target.id === 'canvas3d' || target.id === 'canvas2dCanvas') {
+            this.sceneManager.handleMouseUp(event); // 允许事件冒泡
+        }
     }
 
     /**
@@ -156,7 +162,10 @@ export class Application {
      * @param event 鼠标事件
      */
     private handleMouseMove(event: MouseEvent): void {
-        this.sceneManager.handleMouseMove(event);
+        const target = event.target as HTMLElement;
+        if (target.id === 'canvas3d' || target.id === 'canvas2dCanvas') {
+            this.sceneManager.handleMouseMove(event);
+        }
     }
 
     /**
@@ -183,7 +192,7 @@ export class Application {
     public executeCommand(command: string, data: any): any {
         const commandInstance = this.commandManager.getCommand(command);
         if (commandInstance) {
-            console.log("当前执行的命令为:%s", command);
+            console.log("当前执行的命令为:%s, 参数为:", command, data);
             return commandInstance.executeCommand(data);
         } else {
             console.warn(`Command ${command} not found`);
