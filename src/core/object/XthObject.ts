@@ -56,6 +56,13 @@ export class XthObject extends XthTree {
         });
 
         // 为 object2 和 object3 打上扩展数据
+        this.setProxy();
+
+        this.fromJSON(json);
+    }
+
+    setProxy(): void {
+        // 为 object2 和 object3 打上扩展数据
         if (!this.object2.metadata) {
             this.object2.metadata = {};
         }
@@ -65,8 +72,6 @@ export class XthObject extends XthTree {
             this.object3.metadata = {};
         }
         this.object3.metadata.object = this;
-
-        this.fromJSON(json);
     }
 
     toJSON(): any {
@@ -145,6 +150,9 @@ export class XthObject extends XthTree {
 
     /***/
     rebuild(scene2: BABYLON.Scene | undefined, scene3: BABYLON.Scene | undefined): void {
+        if (!this.parent) {
+            return;
+        }
         this.build2d(scene2);
         this.build3d(scene3);
     }
