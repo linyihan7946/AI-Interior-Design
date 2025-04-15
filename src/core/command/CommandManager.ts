@@ -11,6 +11,7 @@ import * as AICommand from './AICommand';
 import * as TestCommand from './TestCommand';
 import { getCommandRegistry } from './CommandRegistry';
 import * as EditObjectCommand from './EditObjectCommand';
+import * as FurnitureCommand from './FurnitureCommand';
 
 export class CommandManager {
     constructor() {
@@ -26,6 +27,7 @@ export class CommandManager {
         AICommand.register();
         TestCommand.register();
         EditObjectCommand.register(); // 注册编辑物体命令
+        FurnitureCommand.register(); // 注册插入家具命令
     }
 
     /**

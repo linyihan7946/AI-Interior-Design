@@ -16,4 +16,7 @@ export class MaterialNameList {
 
     // 其他材质名称
     public static readonly DEFAULT_MATERIAL = 'defaultMaterial';
+
+    // 家具材质名称
+    public static readonly FURNITURE_MATERIAL = "furnitureMaterial";
 }
