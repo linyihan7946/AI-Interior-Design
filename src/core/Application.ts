@@ -190,13 +190,7 @@ export class Application {
      * @param data 命令参数
      */
     public executeCommand(command: string, data: any): any {
-        const commandInstance = this.commandManager.getCommand(command);
-        if (commandInstance) {
-            console.log("当前执行的命令为:%s, 参数为:", command, data);
-            return commandInstance.executeCommand(data);
-        } else {
-            console.warn(`Command ${command} not found`);
-        }
+        return this.commandManager.executeCommand(command, data);
     }
 
     /**

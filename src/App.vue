@@ -13,6 +13,8 @@
         <button @click="sendPresetMessage('帮我创建一个矩形房间')">创建一个矩形房间</button>
         <button @click="sendPresetMessage('帮我添加一个单开门：宽度1000，高度1800，离地高0，厚度480，位置是（0,2000,0）')">添加一个单开门</button>
         <button @click="sendPresetMessage('帮我删除当前选中物体')">删除当前选中物体</button>
+        <button @click="sendPresetMessage('回退')">回退</button>
+        <button @click="sendPresetMessage('撤销')">撤销</button>
       </div>
     </div>
   </div>

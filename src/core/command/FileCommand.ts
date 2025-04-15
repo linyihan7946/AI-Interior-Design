@@ -8,6 +8,7 @@ import { SceneManager } from '../manager/SceneManager';
 import { CommandBase } from './CommandBase';
 import { Command } from './CommandRegistry';
 import { Api } from '../Api';
+import { sceneUndoManager } from '../bottomClass/SceneProxyUndoManager';
 
 @Command('openScene')
 export class OpenSceneCommand extends CommandBase {
@@ -63,6 +64,28 @@ export class NewFileCommand extends CommandBase {
     public executeCommand(): void {
         this.sceneManager.newFile();
         const scene = this.sceneManager.getScene();
+    }
+}
+
+@Command('undo')
+export class UndoCommand extends CommandBase {
+    constructor() {
+        super({ name: 'UndoCommand', shouldRecordUndo: false, shouldCancelPreviousCommand: false });
+    }
+
+    public executeCommand(): void {
+        sceneUndoManager.undo();
+    }
+}
+
+@Command('redo')
+export class RedoCommand extends CommandBase {
+    constructor() {
+        super({ name: 'RedoCommand', shouldRecordUndo: false, shouldCancelPreviousCommand: false });
+    }
+
+    public executeCommand(): void {
+        sceneUndoManager.redo();
     }
 }
 
